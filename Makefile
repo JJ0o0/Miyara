@@ -3,7 +3,7 @@ CC = x86_64-elf-gcc
 LD = x86_64-elf-ld
 
 ASFLAGS = -f elf64
-CFLAGS = -ffreestanding -mno-red-zone -fno-asynchronous-unwind-tables -fno-unwind-tables
+CFLAGS = -ffreestanding -mno-red-zone -fno-asynchronous-unwind-tables -fno-unwind-tables -Iinclude
 LDFLAGS = -T linker.ld
 
 BUILD = build
