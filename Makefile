@@ -8,8 +8,8 @@ LDFLAGS = -T linker.ld
 
 BUILD = build
 
-C_SOURCES := $(wildcard kernel/*.c)
-ASM_SOURCES := $(wildcard boot/*.asm)
+C_SOURCES := $(shell find kernel -name '*.c')
+ASM_SOURCES := $(shell find boot -name '*.asm')
 
 C_OBJECTS := $(patsubst kernel/%.c,$(BUILD)/%.o,$(C_SOURCES))
 ASM_OBJECTS := $(patsubst boot/%.asm,$(BUILD)/%.o,$(ASM_SOURCES))
@@ -17,13 +17,12 @@ ASM_OBJECTS := $(patsubst boot/%.asm,$(BUILD)/%.o,$(ASM_SOURCES))
 .PHONY: all clean
 all: $(BUILD)/kernel.elf
 
-$(BUILD):
-	mkdir -p $(BUILD)
-
-$(BUILD)/%.o: kernel/%.c | $(BUILD)
+$(BUILD)/%.o: kernel/%.c
+	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD)/%.o: boot/%.asm | $(BUILD)
+$(BUILD)/%.o: boot/%.asm
+	mkdir -p $(dir $@)
 	$(ASM) $(ASFLAGS) $< -o $@
 
 $(BUILD)/kernel.elf: $(ASM_OBJECTS) $(C_OBJECTS)
