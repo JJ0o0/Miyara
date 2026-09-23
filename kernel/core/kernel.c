@@ -1,31 +1,16 @@
 #include <terminal/terminal.h>
+#include <interrupt/idt.h>
 
 void kernel_main(void) {
     Terminal term = create_terminal();
+    idt_init(&term);
 
-    for (int i = 0; i < 15; i++) {
-        term_write(&term, "====================\n");
-        term_write(&term, "Miyara Kernel IT ");
-        term_write_int(&term, i);
-        term_putc(&term, '\n');
-        
-        term_write(&term, "Decimal: ");
-        term_write_int(&term, 12345);
-        term_putc(&term, '\n');
+    int numerador = 67;
+    int denominador = 0;
+    int resultado = numerador / denominador;
 
-        term_write(&term, "Negative: ");
-        term_write_int(&term, -420);
-        term_putc(&term, '\n');
-
-        term_write(&term, "Zero: ");
-        term_write_int(&term, 0);
-        term_putc(&term, '\n');
-
-        term_write(&term, "Hex: ");
-        term_write_hex(&term, 0xDEADBEEF);
-        term_putc(&term, '\n');
-        term_write(&term, "====================\n");
-    }
+    term_write_int(&term, resultado);
+    term_putc(&term, '\n');
 
     while (1) {}
 }

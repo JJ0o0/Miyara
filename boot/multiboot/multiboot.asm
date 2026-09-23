@@ -36,7 +36,7 @@ section .rodata
             dw 0x0000   ; Base  15:0
             db 0x00     ; Base  23:16
             db 0x9A     ; Access
-            db 0xFA     ; Limit 19:16 + Flags
+            db 0xAF     ; Limit 19:16 + Flags
             db 0x00     ; Base  31:24
     gdt_end:
 

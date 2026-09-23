@@ -9,10 +9,15 @@ LDFLAGS = -T linker.ld
 BUILD = build
 
 C_SOURCES := $(shell find kernel -name '*.c')
-ASM_SOURCES := $(shell find boot -name '*.asm')
+
+BOOT_ASM_SOURCES := $(shell find boot -name '*.asm')
+KERNEL_ASM_SOURCES := $(shell find kernel -name '*.asm')
+
+BOOT_ASM_OBJECTS := $(patsubst boot/%.asm,$(BUILD)/asm/%.o,$(BOOT_ASM_SOURCES))
+KERNEL_ASM_OBJECTS := $(patsubst kernel/%.asm,$(BUILD)/asm/%.o,$(KERNEL_ASM_SOURCES))
+ASM_OBJECTS := $(BOOT_ASM_OBJECTS) $(KERNEL_ASM_OBJECTS)
 
 C_OBJECTS := $(patsubst kernel/%.c,$(BUILD)/%.o,$(C_SOURCES))
-ASM_OBJECTS := $(patsubst boot/%.asm,$(BUILD)/%.o,$(ASM_SOURCES))
 
 .PHONY: all clean
 all: $(BUILD)/kernel.elf
@@ -21,7 +26,11 @@ $(BUILD)/%.o: kernel/%.c
 	mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(BUILD)/%.o: boot/%.asm
+$(BUILD)/asm/%.o: kernel/%.asm
+	mkdir -p $(dir $@)
+	$(ASM) $(ASFLAGS) $< -o $@
+
+$(BUILD)/asm/%.o: boot/%.asm
 	mkdir -p $(dir $@)
 	$(ASM) $(ASFLAGS) $< -o $@
 
