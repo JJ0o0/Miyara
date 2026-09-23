@@ -12,6 +12,7 @@ void idt_init(Terminal* terminal) {
     idtr.base = (u64)idt_table;
 
     idt_set_gate(&idt_table[0], (u64)isr_divide_error);
+    idt_set_gate(&idt_table[6], (u64)isr_invalid_opcode);
 
     idt_load(&idtr); // interrupt/idt.asm
 }
@@ -31,8 +32,22 @@ void idt_set_gate(IDTEntry* entry, u64 handler) {
     entry->reserved = 0;
 }
 
-void exception_handler(CPUContext* exception) {
-    term_write(global_terminal, "EXCEPTION: Divide Error (#DE)\n");
+void exception_dispatch(u64 vector, CPUContext* exception) {
+    char* exceptionName = "Unknown Exception";
+    switch (vector) {
+        case 0:
+            exceptionName = "Divide Error (#DE)";
+            break;
+        case 6:
+            exceptionName = "Invalid Opcode (#UD)";
+            break;
+        default:
+            break;
+    }
+
+    term_write(global_terminal, "EXCEPTION: ");
+    term_write(global_terminal, exceptionName);
+    term_putc(global_terminal, '\n');
 
     term_write(global_terminal, "RIP: 0x");
     term_write_hex(global_terminal, exception->rip);
@@ -44,6 +59,10 @@ void exception_handler(CPUContext* exception) {
 
     term_write(global_terminal, "RFLAGS: 0x");
     term_write_hex(global_terminal, exception->rflags);
+    term_putc(global_terminal, '\n');
+
+    term_write(global_terminal, "Error Code: 0x");
+    term_write_hex(global_terminal, exception->error_code);
     term_putc(global_terminal, '\n');
 
     while (1) {}

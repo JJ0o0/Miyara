@@ -40,6 +40,7 @@ typedef struct {
     u64 rbx;
     u64 rax;
 
+    u64 error_code;
     u64 rip;
     u64 cs;
     u64 rflags;
@@ -48,7 +49,7 @@ typedef struct {
 _Static_assert(sizeof(IDTEntry) == 16, "IDTEntry must be 16 bytes.");
 _Static_assert(sizeof(IDTR) == 10, "IDTR must be 10 bytes.");
 _Static_assert(sizeof(IDTTable) == 4096, "IDTTable must be 4096 bytes.");
-_Static_assert(sizeof(CPUContext) == 144, "CPUContext must be 144 bytes.");
+_Static_assert(sizeof(CPUContext) == 152, "CPUContext must be 152 bytes.");
 
 void idt_init(Terminal* terminal);
 void idt_load(IDTR* idtr);
@@ -56,6 +57,7 @@ void idt_set_handler(IDTEntry* entry, u64 handler);
 void idt_set_gate(IDTEntry* entry, u64 handler);
 
 extern void isr_divide_error(void);
-void exception_handler(CPUContext* exception);
+extern void isr_invalid_opcode(void);
+void exception_dispatch(u64 vector, CPUContext* exception);
 
 #endif
