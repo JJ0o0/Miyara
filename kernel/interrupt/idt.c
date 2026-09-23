@@ -13,6 +13,8 @@ void idt_init(Terminal* terminal) {
 
     idt_set_gate(&idt_table[0], (u64)isr_divide_error);
     idt_set_gate(&idt_table[6], (u64)isr_invalid_opcode);
+    idt_set_gate(&idt_table[13], (u64)isr_general_protection);
+    idt_set_gate(&idt_table[14], (u64)isr_page_fault);
 
     idt_load(&idtr); // interrupt/idt.asm
 }
@@ -41,6 +43,12 @@ void exception_dispatch(u64 vector, CPUContext* exception) {
         case 6:
             exceptionName = "Invalid Opcode (#UD)";
             break;
+        case 13:
+            exceptionName = "General Protection (#GP)";
+            break;
+        case 14:
+            exceptionName = "Page Fault (#PF)";
+            break;
         default:
             break;
     }
@@ -48,6 +56,12 @@ void exception_dispatch(u64 vector, CPUContext* exception) {
     term_write(global_terminal, "EXCEPTION: ");
     term_write(global_terminal, exceptionName);
     term_putc(global_terminal, '\n');
+
+    if (vector == 14) {
+        term_write(global_terminal, "Fault Address: 0x");
+        term_write_hex(global_terminal, get_cr2());
+        term_putc(global_terminal, '\n');
+    }
 
     term_write(global_terminal, "RIP: 0x");
     term_write_hex(global_terminal, exception->rip);
