@@ -222,4 +222,25 @@ extern void isr_page_fault(void);
  */
 void exception_dispatch(u64 vector, CPUContext* exception);
 
+/**
+ * ISR stub for IRQ 0 (timer / PIT).
+ *
+ * Unlike the exception stubs, this one does not push an error code
+ * or a vector number, and it does not go through
+ * common_exception_handler: it saves the registers, calls
+ * irq_dispatch(0) directly and restores them before iretq.
+ */
+extern void isr_timer(void);
+
+/**
+ * Common C entry point for hardware interrupts (IRQs).
+ *
+ * Called by the ISR stub after it has saved the general-purpose
+ * registers. Unlike exception_dispatch, it does not receive a
+ * CPUContext*, since isr_timer does not build one on the stack.
+ *
+ * @param irq IRQ number (0 = timer/PIT).
+ */
+void irq_dispatch(u64 irq);
+
 #endif
