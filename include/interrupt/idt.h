@@ -1,7 +1,6 @@
 #ifndef IDT_H
 #define IDT_H
 
-#include <terminal/terminal.h>
 #include <types/types.h>
 
 /**
@@ -145,10 +144,8 @@ _Static_assert(sizeof(CPUContext) == 152, "CPUContext must be 152 bytes.");
 /**
  * Initializes the IDT, registers the exception handlers and loads
  * the table into the CPU.
- *
- * @param terminal Terminal used to report exceptions.
  */
-void idt_init(Terminal* terminal);
+void idt_init(void);
 
 /**
  * Loads the given descriptor into the IDTR register (`lidt`).

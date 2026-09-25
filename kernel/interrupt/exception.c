@@ -1,52 +1,30 @@
-#include <terminal/terminal.h>
 #include <interrupt/idt.h>
+#include <log/log.h>
 
-extern Terminal* global_terminal;
+const char* get_exception_name(u64 vector);
 
 void exception_dispatch(u64 vector, CPUContext* exception) {
-    const char* exceptionName = "Unknown Exception";
-    switch (vector) {
-        case 0:
-            exceptionName = "Divide Error (#DE)";
-            break;
-        case 6:
-            exceptionName = "Invalid Opcode (#UD)";
-            break;
-        case 13:
-            exceptionName = "General Protection (#GP)";
-            break;
-        case 14:
-            exceptionName = "Page Fault (#PF)";
-            break;
-        default:
-            break;
-    }
-
-    term_write(global_terminal, "EXCEPTION: ");
-    term_write(global_terminal, exceptionName);
-    term_putc(global_terminal, '\n');
+    const char* exceptionName = get_exception_name(vector);
+    log(LOG_ERROR, exceptionName);
 
     if (vector == 14) {
-        term_write(global_terminal, "Fault Address: 0x");
-        term_write_hex(global_terminal, get_cr2());
-        term_putc(global_terminal, '\n');
+        log_hex(LOG_ERROR, "Fault Address", get_cr2());
     }
 
-    term_write(global_terminal, "RIP: 0x");
-    term_write_hex(global_terminal, exception->rip);
-    term_putc(global_terminal, '\n');
-
-    term_write(global_terminal, "CS: 0x");
-    term_write_hex(global_terminal, exception->cs);
-    term_putc(global_terminal, '\n');
-
-    term_write(global_terminal, "RFLAGS: 0x");
-    term_write_hex(global_terminal, exception->rflags);
-    term_putc(global_terminal, '\n');
-
-    term_write(global_terminal, "Error Code: 0x");
-    term_write_hex(global_terminal, exception->error_code);
-    term_putc(global_terminal, '\n');
+    log_hex(LOG_ERROR, "RIP", exception->rip);
+    log_hex(LOG_ERROR, "CS", exception->cs);
+    log_hex(LOG_ERROR, "RFLAGS", exception->rflags);
+    log_hex(LOG_ERROR, "Error Code", exception->error_code);
 
     while (1) {}
+}
+
+const char* get_exception_name(u64 vector) {
+    switch (vector) {
+        case 0:     return "Divide Error (#DE)";
+        case 6:     return "Invalid Opcode (#UD)";
+        case 13:    return "General Protection (#GP)";
+        case 14:    return "Page Fault (#PF)";
+        default:    return "Unknown Exception";
+    }
 }

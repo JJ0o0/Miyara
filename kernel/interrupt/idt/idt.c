@@ -1,13 +1,10 @@
-#include <terminal/terminal.h>
 #include <interrupt/idt.h>
 #include <interrupt/pic.h>
+#include <log/log.h>
 
-Terminal* global_terminal;
 IDTTable idt_table = {0};
 
-void idt_init(Terminal* terminal) {
-    global_terminal = terminal;
-
+void idt_init(void) {
     IDTR idtr;
     idtr.limit = (IDT_TABLE_ENTRY_COUNT * 16) - 1;
     idtr.base = (u64)idt_table;

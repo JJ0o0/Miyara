@@ -2,28 +2,31 @@
 #include <interrupt/idt.h>
 #include <interrupt/pic.h>
 #include <timer/pit.h>
+#include <log/log.h>
 #include <io/io.h>
 
 void kernel_main(void) {
     Terminal term = create_terminal();
-    term_write(&term, "[OK] Initialized terminal.\n");
+    log_init(&term);
 
-    term_write(&term, "[WAIT] Initializing PIC...\n");
+    log(LOG_SUCCESS, "Initialized terminal.");
+
+    log(LOG_INFO, "Initializing PIC...");
     pic_init();
-    term_write(&term, "[OK] Initialized PIC.\n");
+    log(LOG_SUCCESS, "Initialized PIC.");
 
-    term_write(&term, "[WAIT] Initializing IDT...\n");
-    idt_init(&term);
-    term_write(&term, "[OK] Initialized IDT.\n");
+    log(LOG_INFO, "Initializing IDT...");
+    idt_init();
+    log(LOG_SUCCESS, "Initialized IDT.");
 
-    term_write(&term, "[WAIT] Initializing PIT...\n");
+    log(LOG_INFO, "Initializing PIT...");
     pit_init(100);
-    term_write(&term, "[OK] Initialized PIT.\n");
+    log(LOG_SUCCESS, "Initialized PIT.");
 
-    term_write(&term, "[WAIT] Enabling Interrupts...\n");
+    log(LOG_INFO, "Enabling Interrupts...");
     enable_interrupts();
-    term_write(&term, "[OK] Enabled Interrupts.\n");
+    log(LOG_SUCCESS, "Enabled Interrupts.");
 
-    term_write(&term, "\nWelcome to Miyara\n");
+    log(LOG_INFO, "\nWelcome to Miyara\n");
     while (1) {}
 }
