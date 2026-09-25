@@ -1,6 +1,7 @@
 #include <terminal/terminal.h>
 #include <interrupt/idt.h>
 #include <interrupt/pic.h>
+#include <timer/timer.h>
 #include <timer/pit.h>
 #include <log/log.h>
 #include <io/io.h>
@@ -27,6 +28,10 @@ void kernel_main(void) {
     enable_interrupts();
     log(LOG_SUCCESS, "Enabled Interrupts.");
 
-    log(LOG_INFO, "\nWelcome to Miyara\n");
+    log(LOG_INFO, "Welcome to Miyara\n");
+
+    timer_wait_ticks(100);
+    log_hex(LOG_INFO, "Ticks", timer_get_ticks());
+
     while (1) {}
 }
