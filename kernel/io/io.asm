@@ -1,7 +1,16 @@
+global io_in8
 global io_out8
 global enable_interrupts
 
 section .text
+    ; io_in8(u16)
+    ; u16 port (RDI)
+    ; return u8 (RAX)
+    io_in8:
+        mov dx, di
+        in al, dx
+        ret
+
     ; io_out8(u16, u8)
     ; u16 port (RDI)
     ; u8 value (RSI)

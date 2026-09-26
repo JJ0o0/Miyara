@@ -229,6 +229,8 @@ void exception_dispatch(u64 vector, CPUContext* exception);
  */
 extern void isr_timer(void);
 
+extern void isr_keyboard(void);
+
 /**
  * Common C entry point for hardware interrupts (IRQs).
  *

@@ -1,8 +1,10 @@
 global idt_load
 global common_exception_handler
+global common_irq_handler
 global get_cr2
 
 extern exception_dispatch
+extern irq_dispatch
 
 section .text
     ; idt_load(IDTR*)
@@ -60,6 +62,46 @@ section .text
         add rsp, 8
 
         ; Exception return
+        iretq
+
+    ; common_irq_handler
+    common_irq_handler:
+        mov rdi, [rsp] ; IRQ Number
+
+        ; Save exception frame base
+        mov rbp, rsp
+
+        ; 16 bytes align
+        and rsp, -16
+
+        ; irq_dispatch(u64)
+        cld
+        call irq_dispatch
+
+        mov rsp, rbp
+
+    ; common_irq_return
+    common_irq_return:
+        add rsp, 8
+
+        ; Restoring registers
+        pop r15
+        pop r14
+        pop r13
+        pop r12
+        pop r11
+        pop r10
+        pop r9
+        pop r8
+
+        pop rbp
+        pop rdi
+        pop rsi
+        pop rdx
+        pop rcx
+        pop rbx
+        pop rax
+
         iretq
 
     ; u64 get_cr2(void)

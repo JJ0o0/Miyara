@@ -4,9 +4,10 @@ global isr_general_protection
 global isr_page_fault
 
 global isr_timer
+global isr_keyboard
 
 extern common_exception_handler
-extern irq_dispatch
+extern common_irq_handler
 
 section .text
     ; #DE - Divide Error (Vector 0)
@@ -107,6 +108,7 @@ section .text
         push qword 14
         jmp common_exception_handler
     
+    ; Timer (Vector 32)
     isr_timer:
         ; Save registers
         push rax
@@ -125,30 +127,27 @@ section .text
         push r14
         push r15
 
-        mov rbp, rsp
-        and rsp, -16
+        push qword 0
+        jmp common_irq_handler
+    
+    ; Keyboard (Vector 33)
+    isr_keyboard:
+        ; Save registers
+        push rax
+        push rbx
+        push rcx
+        push rdx
+        push rsi
+        push rdi
+        push rbp
+        push r8
+        push r9
+        push r10
+        push r11
+        push r12
+        push r13
+        push r14
+        push r15
 
-        mov rdi, 0
-        call irq_dispatch
-
-        mov rsp, rbp
-
-        ; Restoring registers
-        pop r15
-        pop r14
-        pop r13
-        pop r12
-        pop r11
-        pop r10
-        pop r9
-        pop r8
-
-        pop rbp
-        pop rdi
-        pop rsi
-        pop rdx
-        pop rcx
-        pop rbx
-        pop rax
-
-        iretq
+        push qword 1
+        jmp common_irq_handler

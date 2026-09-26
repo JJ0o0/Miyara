@@ -2,6 +2,7 @@
 #include <interrupt/idt.h>
 #include <interrupt/pic.h>
 #include <timer/timer.h>
+#include <event/event.h>
 #include <timer/pit.h>
 #include <log/log.h>
 #include <io/io.h>
@@ -33,5 +34,25 @@ void kernel_main(void) {
     timer_wait_ticks(100);
     log_hex(LOG_INFO, "Ticks", timer_get_ticks());
 
-    while (1) {}
+    Event event;
+    while (1) {
+        if (!get_event(&event)) {
+            continue;
+        }
+
+        switch (event.type) {
+            case EVENT_KEYBOARD: {
+                KeyEvent key_event = event.data.keyboard;
+                
+                if (key_event.key == KEY_A) {
+                    if (key_event.state == KEY_PRESSED) {
+                        log(LOG_DEBUG, "Key A pressed");
+                    } else {
+                        log(LOG_DEBUG, "Key A released");
+                    }
+                }
+                break;
+            }
+        }
+    }
 }

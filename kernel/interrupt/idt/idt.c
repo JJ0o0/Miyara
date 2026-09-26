@@ -15,6 +15,7 @@ void idt_init(void) {
     idt_set_gate(&idt_table[14], (u64)isr_page_fault);
 
     idt_set_gate(&idt_table[32], (u64)isr_timer);
+    idt_set_gate(&idt_table[33], (u64)isr_keyboard);
 
     idt_load(&idtr); // interrupt/idt.asm
 }

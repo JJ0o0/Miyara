@@ -3,6 +3,8 @@
 
 #include <types/types.h>
 
+u8 io_in8(u16 port);
+
 /**
  * Writes a byte to an I/O port.
  *
