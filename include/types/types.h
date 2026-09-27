@@ -1,11 +1,24 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+/**
+ * Fixed-width unsigned integer types.
+ *
+ * Freestanding environment, so <stdint.h> is not used: these are
+ * defined directly on top of the built-in types, whose sizes are
+ * fixed below by the _Static_assert checks.
+ */
 typedef unsigned char   u8;
 typedef unsigned short  u16;
 typedef unsigned int    u32;
 typedef unsigned long   u64;
 
+/**
+ * Freestanding boolean type.
+ *
+ * No <stdbool.h> here, so true/false and bool are defined by hand.
+ * Any nonzero value is truthy; only the literal 0 is false.
+ */
 #define true  1
 #define false 0
 typedef u8 bool;

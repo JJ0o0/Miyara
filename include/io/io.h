@@ -3,6 +3,14 @@
 
 #include <types/types.h>
 
+/**
+ * Reads a byte from an I/O port.
+ *
+ * Implemented in assembly (`in al, dx`).
+ *
+ * @param port I/O port to read from.
+ * @return Byte read from the port.
+ */
 u8 io_in8(u16 port);
 
 /**

@@ -220,15 +220,21 @@ extern void isr_page_fault(void);
 void exception_dispatch(u64 vector, CPUContext* exception);
 
 /**
- * ISR stub for IRQ 0 (timer / PIT).
+ * ISR stub for IRQ 0 (timer/PIT, vector 32).
  *
- * Unlike the exception stubs, this one does not push an error code
- * or a vector number, and it does not go through
- * common_exception_handler: it saves the registers, calls
- * irq_dispatch(0) directly and restores them before iretq.
+ * Saves the general-purpose registers, pushes the IRQ number (0)
+ * and jumps to common_irq_handler, which is expected to call
+ * irq_dispatch(0) and restore the registers before iretq.
  */
 extern void isr_timer(void);
 
+/**
+ * ISR stub for IRQ 1 (keyboard, vector 33).
+ *
+ * Saves the general-purpose registers, pushes the IRQ number (1)
+ * and jumps to common_irq_handler, which is expected to call
+ * irq_dispatch(1) and restore the registers before iretq.
+ */
 extern void isr_keyboard(void);
 
 /**

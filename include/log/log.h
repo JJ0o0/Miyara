@@ -39,6 +39,30 @@ void log_init(Terminal* term);
 void log(LogType type, const char* msg);
 
 /**
+ * Writes a tagged log message with a labeled signed integer,
+ * followed by a newline.
+ *
+ * Format: "[TYPE] label: value\n"
+ *
+ * @param type Severity/category of the message.
+ * @param label Null-terminated label describing the value.
+ * @param value Signed integer to write in decimal.
+ */
+void log_int(LogType type, const char* label, int value);
+
+/**
+ * Writes a tagged log message with a labeled boolean, followed by
+ * a newline.
+ *
+ * Format: "[TYPE] label: True\n" or "[TYPE] label: False\n"
+ *
+ * @param type Severity/category of the message.
+ * @param label Null-terminated label describing the value.
+ * @param value Boolean to write ("True"/"False").
+ */
+void log_bool(LogType type, const char* label, bool value);
+
+/**
  * Writes a tagged log message with a labeled hexadecimal value,
  * followed by a newline.
  *

@@ -18,6 +18,30 @@ void log(LogType type, const char* msg) {
     term_putc(terminal, '\n');
 }
 
+void log_int(LogType type, const char* label, int value) {
+    const char* typeStr = get_type_as_string(type);
+
+    term_putc(terminal, '[');
+    term_write(terminal, typeStr);
+    term_write(terminal, "] ");
+    term_write(terminal, label);
+    term_write(terminal, ": ");
+    term_write_int(terminal, value);
+    term_putc(terminal, '\n');
+}
+
+void log_bool(LogType type, const char* label, bool value) {
+    const char* typeStr = get_type_as_string(type);
+
+    term_putc(terminal, '[');
+    term_write(terminal, typeStr);
+    term_write(terminal, "] ");
+    term_write(terminal, label);
+    term_write(terminal, ": ");
+    term_write(terminal, value ? "True" : "False");
+    term_putc(terminal, '\n');
+}
+
 void log_hex(LogType type, const char* label, u64 value) {
     const char* typeStr = get_type_as_string(type);
 
