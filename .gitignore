@@ -17,6 +17,7 @@ dist/
 # Editor
 .vscode/
 .idea/
+compile_commands.json
 
 # OS files
 .DS_Store

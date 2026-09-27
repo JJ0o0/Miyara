@@ -37,7 +37,7 @@ run_step()
 mkdir -p "$DIST_DIR"
 
 # Calling Make
-run_step "[1/4] Calling make..." make
+run_step "[1/4] Calling make..." bear -- make
 
 # ISO folder preparation
 printf "\r\033[K${CYAN}[2/4] Preparing ISO directory...${RESET}"
