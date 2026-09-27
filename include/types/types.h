@@ -1,6 +1,12 @@
 #ifndef TYPES_H
 #define TYPES_H
 
+/**
+ * Null pointer constant.
+ *
+ * Freestanding environment, so <stddef.h> is not used: NULL is
+ * defined by hand, same as bool/true/false above.
+ */
 #define NULL ((void*)0)
 
 /**

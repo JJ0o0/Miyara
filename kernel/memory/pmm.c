@@ -1,18 +1,34 @@
 #include <memory/pmm.h>
 #include <math/math.h>
+#include <log/log.h>
 
 #define PAGE_SIZE 0x1000
+#define PAGE_STATE_BITS 2
+#define PAGE_STATES_PER_BYTE (8 / PAGE_STATE_BITS)
 #define MAX_MEMORY_REGIONS 32
 static MemoryRegion memory_regions[MAX_MEMORY_REGIONS] = {0};
 static u64 region_count = 0;
 
 static u8 bitmap_region0[PAGE_SIZE] = {0};
-static u8 bitmap_region1[PAGE_SIZE] = {0};
+static u8 bitmap_region1[PAGE_SIZE * 2] = {0};
+
+typedef enum {
+    PAGE_FREE,
+    PAGE_ALLOCATED,
+    PAGE_RESERVED,
+    PAGE_INVALID
+} PageState;
 
 static void bitmap_init(MemoryRegion* region);
 static void bitmap_release_region(MemoryRegion* region);
+
+static void bitmap_alloc_page(u64 physical_address);
 static void bitmap_reserve_page(u64 physical_address);
 static void bitmap_reserve_range(u64 start, u64 length);
+
+static void bitmap_set_page_state(MemoryRegion* region, u64 page_index, PageState state);
+static PageState bitmap_get_page_state(MemoryRegion* region, u64 page_index);
+
 static u64 bitmap_find_free_page(MemoryRegion* region);
 static u64 physical_to_page_index(MemoryRegion* region, u64 physical_address);
 static MemoryRegion* find_memory_region(u64 physical_address);
@@ -83,7 +99,7 @@ u64 pmm_alloc_page(void) {
     for (u64 i = 0; i < region_count; i++) {
         u64 physical_address = bitmap_find_free_page(&memory_regions[i]);
         if (physical_address != 0) {
-            bitmap_reserve_page(physical_address);
+            bitmap_alloc_page(physical_address);
             return physical_address;
         }
     }
@@ -92,34 +108,48 @@ u64 pmm_alloc_page(void) {
 }
 
 void pmm_free_page(u64 physical_address) {
+    if (physical_address % PAGE_SIZE != 0) {
+        return;
+    }
+
     MemoryRegion* mr = find_memory_region(physical_address);
     if (mr == NULL) {
         return;
     }
 
     u64 page_index = physical_to_page_index(mr, physical_address);
-    u64 byte_index = page_index / 8;
-    u64 bit_index = page_index % 8;
-    mr->bitmap[byte_index] &= ~(1ULL << bit_index);
+    if (bitmap_get_page_state(mr, page_index) != PAGE_ALLOCATED) {
+        return;
+    }
+
+    bitmap_set_page_state(mr, page_index, PAGE_FREE);
 }
 
 static void bitmap_init(MemoryRegion* region) {
-    u64 bitmap_bytes = ceil_div(region->page_count, 8);
+    u64 bitmap_bytes = ceil_div(region->page_count, PAGE_STATES_PER_BYTE);
     for (u64 i = 0; i < bitmap_bytes; i++) {
         region->bitmap[i] = 0xFF;
     }
 }
 
 static void bitmap_release_region(MemoryRegion* region) {
-    u64 bitmap_bytes = ceil_div(region->page_count, 8);
-    u64 remaining_bits = region->page_count % 8;
-    for (u64 i = 0; i < bitmap_bytes; i++) {
-        region->bitmap[i] = ~region->bitmap[i];
+    for (u64 page_index = 0; page_index < region->page_count; page_index++) {
+        bitmap_set_page_state(region, page_index, PAGE_FREE);
+    }
+}
+
+static void bitmap_alloc_page(u64 physical_address) {
+    MemoryRegion* mr = find_memory_region(physical_address);
+    if (mr == NULL) {
+        return;
     }
 
-    if (remaining_bits != 0) {
-        region->bitmap[bitmap_bytes - 1] = ~((1ULL << remaining_bits) - 1);
+    u64 page_index = physical_to_page_index(mr, physical_address);
+    if (bitmap_get_page_state(mr, page_index) != PAGE_FREE) {
+        return;
     }
+
+    bitmap_set_page_state(mr, page_index, PAGE_ALLOCATED);
 }
 
 static void bitmap_reserve_page(u64 physical_address) {
@@ -129,9 +159,7 @@ static void bitmap_reserve_page(u64 physical_address) {
     }
 
     u64 page_index = physical_to_page_index(mr, physical_address);
-    u64 byte_index = page_index / 8;
-    u64 bit_index = page_index % 8;
-    mr->bitmap[byte_index] |= (1ULL << bit_index);
+    bitmap_set_page_state(mr, page_index, PAGE_RESERVED);
 }
 
 static void bitmap_reserve_range(u64 start, u64 length) {
@@ -142,12 +170,22 @@ static void bitmap_reserve_range(u64 start, u64 length) {
     }
 }
 
+static void bitmap_set_page_state(MemoryRegion* region, u64 page_index, PageState state) {
+    u64 byte_index = page_index / PAGE_STATES_PER_BYTE;
+    u64 bit_offset = (page_index % PAGE_STATES_PER_BYTE) * PAGE_STATE_BITS;
+    region->bitmap[byte_index] &= ~(0b11 << bit_offset);
+    region->bitmap[byte_index] |= ((state & 0b11) << bit_offset);
+}
+
+static PageState bitmap_get_page_state(MemoryRegion* region, u64 page_index) {
+    u64 byte_index = page_index / PAGE_STATES_PER_BYTE;
+    u64 bit_offset = (page_index % PAGE_STATES_PER_BYTE) * PAGE_STATE_BITS;
+    return (PageState)((region->bitmap[byte_index] >> bit_offset) & 0b11);
+}
+
 static u64 bitmap_find_free_page(MemoryRegion* region) {
     for (u64 page_index = 0; page_index < region->page_count; page_index++) {
-        u64 byte_index = page_index / 8;
-        u64 bit_index = page_index % 8;
-
-        if ((region->bitmap[byte_index] & (1ULL << bit_index)) == 0) {
+        if (bitmap_get_page_state(region, page_index) == PAGE_FREE) {
             return region->start + (page_index * PAGE_SIZE);
         }
     }
@@ -183,7 +221,5 @@ static bool bitmap_is_page_reserved(u64 physical_address) {
     }
 
     u64 page_index = physical_to_page_index(mr, physical_address);
-    u64 byte_index = page_index / 8;
-    u64 bit_index = page_index % 8;
-    return mr->bitmap[byte_index] & (1ULL << bit_index);
+    return bitmap_get_page_state(mr, page_index) == PAGE_RESERVED;
 }
