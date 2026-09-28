@@ -4,6 +4,8 @@
 #include <multiboot/multiboot.h>
 #include <types/types.h>
 
+#define PAGE_SIZE 0x1000
+
 /**
  * A contiguous, page-aligned range of physical memory tracked by the
  * PMM, together with its own allocation bitmap.

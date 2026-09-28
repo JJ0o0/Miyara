@@ -2,7 +2,9 @@
 #include <math/math.h>
 #include <log/log.h>
 
-#define PAGE_SIZE 0x1000
+extern u8 kernel_start;
+extern u8 kernel_end;
+
 #define PAGE_STATE_BITS 2
 #define PAGE_STATES_PER_BYTE (8 / PAGE_STATE_BITS)
 #define MAX_MEMORY_REGIONS 32
@@ -91,8 +93,14 @@ void pmm_init(MBIHeader* mbi) {
         mm_entry = (MemoryMapEntry*)((u8*)mm_entry + mm_tag->entry_size);
     }
 
-    bitmap_reserve_range(0x100000, 0xB000); // KERNEL
-    bitmap_reserve_range(0x10B000, 0x1000); // MBI
+    u64 kernel_start_address = (u64)&kernel_start;
+    u64 kernel_end_address = (u64)&kernel_end;
+
+    u64 kernel_size = kernel_end_address - kernel_start_address;
+    u64 kernel_reserved_size = ceil_div(kernel_size, PAGE_SIZE) * PAGE_SIZE;
+
+    bitmap_reserve_range(kernel_start_address, kernel_reserved_size); // KERNEL
+    bitmap_reserve_range((u64)mbi, mbi->total_size); // MBI
 }
 
 u64 pmm_alloc_page(void) {
@@ -163,9 +171,14 @@ static void bitmap_reserve_page(u64 physical_address) {
 }
 
 static void bitmap_reserve_range(u64 start, u64 length) {
-    u64 page_count = length / PAGE_SIZE;
-    for (u64 i = 0; i < page_count; i++) {
-        u64 physical_address = start + (i * PAGE_SIZE);
+    if (length == 0) {
+        return;
+    }
+
+    u64 start_page = start / PAGE_SIZE;
+    u64 end_page = (start + length - 1) / PAGE_SIZE;
+    for (u64 page = start_page; page <= end_page; page++) {
+        u64 physical_address = page * PAGE_SIZE;
         bitmap_reserve_page(physical_address);
     }
 }

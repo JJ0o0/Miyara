@@ -31,11 +31,14 @@ typedef unsigned long   u64;
 #define false 0
 typedef u8 bool;
 
+typedef u64 size_t;
+
 _Static_assert(sizeof(u8) == 1,   "u8 needs 1 byte."  );
 _Static_assert(sizeof(u16) == 2,  "u16 needs 2 bytes.");
 _Static_assert(sizeof(u32) == 4,  "u32 needs 4 bytes.");
 _Static_assert(sizeof(u64) == 8,  "u64 needs 8 bytes.");
 
 _Static_assert(sizeof(bool) == 1, "bool needs 1 byte.");
+_Static_assert(sizeof(size_t) == 8, "size_t needs 8 bytes.");
 
 #endif

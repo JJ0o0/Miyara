@@ -1,12 +1,20 @@
 #include <multiboot/multiboot.h>
+
 #include <terminal/terminal.h>
+
 #include <interrupt/idt.h>
 #include <interrupt/pic.h>
+
 #include <timer/timer.h>
-#include <types/types.h>
-#include <memory/pmm.h>
 #include <timer/pit.h>
+
+#include <types/types.h>
+
+#include <memory/paging.h>
+#include <memory/pmm.h>
+
 #include <log/log.h>
+
 #include <io/io.h>
 
 void kernel_main(u64 multiboot_info_address) {
@@ -21,6 +29,10 @@ void kernel_main(u64 multiboot_info_address) {
     log(LOG_INFO, "Initializing PMM...");
     pmm_init(mbi);
     log(LOG_SUCCESS, "Initialized PMM.");
+
+    log(LOG_INFO, "Initializing Paging...");
+    paging_init();
+    log(LOG_SUCCESS, "Initialized Paging.");
 
     log(LOG_INFO, "Initializing PIC...");
     pic_init();
