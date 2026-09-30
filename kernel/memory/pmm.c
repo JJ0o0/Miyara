@@ -35,9 +35,6 @@ static u64 bitmap_find_free_page(MemoryRegion* region);
 static u64 physical_to_page_index(MemoryRegion* region, u64 physical_address);
 static MemoryRegion* find_memory_region(u64 physical_address);
 
-// DEBUG
-static bool bitmap_is_page_reserved(u64 physical_address);
-
 void pmm_init(MBIHeader* mbi) {
     TagHeader* current_tag = (TagHeader*)((u8*)mbi + 0x8);
     MemoryMapTag* mm_tag;
@@ -133,6 +130,18 @@ void pmm_free_page(u64 physical_address) {
     bitmap_set_page_state(mr, page_index, PAGE_FREE);
 }
 
+MemoryRegion* pmm_get_memory_region(u64 index) {
+    if (index >= region_count) {
+        return NULL;
+    }
+    
+    return &memory_regions[index];
+}
+
+u64 pmm_get_region_count(void) {
+    return region_count;
+}
+
 static void bitmap_init(MemoryRegion* region) {
     u64 bitmap_bytes = ceil_div(region->page_count, PAGE_STATES_PER_BYTE);
     for (u64 i = 0; i < bitmap_bytes; i++) {
@@ -224,15 +233,4 @@ static MemoryRegion* find_memory_region(u64 physical_address) {
     }
 
     return mr;
-}
-
-// DEBUG
-static bool bitmap_is_page_reserved(u64 physical_address) {
-    MemoryRegion* mr = find_memory_region(physical_address);
-    if (mr == NULL) {
-        return false;
-    }
-
-    u64 page_index = physical_to_page_index(mr, physical_address);
-    return bitmap_get_page_state(mr, page_index) == PAGE_RESERVED;
 }

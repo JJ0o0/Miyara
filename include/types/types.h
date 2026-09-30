@@ -31,6 +31,13 @@ typedef unsigned long   u64;
 #define false 0
 typedef u8 bool;
 
+/**
+ * Freestanding size type, used for sizes and counts of bytes (e.g.
+ * mem_set's quantity parameter).
+ *
+ * No <stddef.h> here, so size_t is defined by hand as an alias for
+ * u64, fixed at 64-bit for this platform.
+ */
 typedef u64 size_t;
 
 _Static_assert(sizeof(u8) == 1,   "u8 needs 1 byte."  );

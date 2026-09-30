@@ -14,6 +14,7 @@
 #include <memory/pmm.h>
 
 #include <log/log.h>
+#include <cpu/cpu.h>
 
 #include <io/io.h>
 
@@ -23,10 +24,8 @@ void kernel_main(u64 multiboot_info_address) {
 
     log(LOG_SUCCESS, "Initialized terminal.");
 
-    MBIHeader* mbi = (MBIHeader*)multiboot_info_address;
-    log_hex(LOG_DEBUG, "MBI Total Size", mbi->total_size);
-
     log(LOG_INFO, "Initializing PMM...");
+    MBIHeader* mbi = (MBIHeader*)multiboot_info_address;
     pmm_init(mbi);
     log(LOG_SUCCESS, "Initialized PMM.");
 
@@ -42,6 +41,10 @@ void kernel_main(u64 multiboot_info_address) {
     idt_init();
     log(LOG_SUCCESS, "Initialized IDT.");
 
+    log(LOG_INFO, "Initializing CPU...");
+    cpu_init();
+    log(LOG_SUCCESS, "Initialized CPU.");
+
     log(LOG_INFO, "Initializing PIT...");
     pit_init(100);
     log(LOG_SUCCESS, "Initialized PIT.");
@@ -50,10 +53,7 @@ void kernel_main(u64 multiboot_info_address) {
     enable_interrupts();
     log(LOG_SUCCESS, "Enabled Interrupts.");
 
-    log(LOG_INFO, "Welcome to Miyara\n");
-
-    timer_wait_ticks(100);
-    log_hex(LOG_INFO, "Ticks", timer_get_ticks());
+    term_write(&term, "\nWelcome to Miyara\n");
 
     while (1) {}
 }

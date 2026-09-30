@@ -4,6 +4,10 @@
 #include <multiboot/multiboot.h>
 #include <types/types.h>
 
+/**
+ * Size of a physical page, in bytes. All PMM allocations, region
+ * boundaries and bitmap indexing are in units of this size.
+ */
 #define PAGE_SIZE 0x1000
 
 /**
@@ -81,5 +85,24 @@ u64 pmm_alloc_page(void);
  *                          (must be page-aligned).
  */
 void pmm_free_page(u64 physical_address);
+
+/**
+ * Returns the MemoryRegion at the given index.
+ *
+ * Regions are indexed in the order pmm_init() registered them, from
+ * 0 to pmm_get_region_count() - 1.
+ *
+ * @param index Region index.
+ * @return Pointer to the region, or NULL if index is out of range.
+ */
+MemoryRegion* pmm_get_memory_region(u64 index);
+
+/**
+ * Returns the number of memory regions registered by pmm_init().
+ *
+ * @return Number of regions (0 if pmm_init() has not been called, or
+ *         found no memory map).
+ */
+u64 pmm_get_region_count(void);
 
 #endif
