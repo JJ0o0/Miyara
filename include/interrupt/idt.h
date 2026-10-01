@@ -21,7 +21,7 @@ typedef struct {
      */
     u16 selector;
 
-     /**
+    /**
      * Interrupt Stack Table index (bits 0-2).
      *
      * 0 means no stack switch. Bits 3-7 are reserved and must be zero.
@@ -169,6 +169,11 @@ void idt_set_handler(IDTEntry* entry, u64 handler);
 
 /**
  * Configures an IDT entry as a gate for the given handler.
+ *
+ * Sets the handler address (see idt_set_handler) and fills the
+ * remaining fields with fixed values: code segment selector 0x18,
+ * IST index 0 (no stack switch), type_attr 0x8E (present, DPL 0,
+ * interrupt gate) and reserved 0.
  *
  * @param entry IDT entry to configure.
  * @param handler Address of the handler routine.

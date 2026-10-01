@@ -134,7 +134,14 @@ typedef enum {
  * Press/release state of a key event.
  */
 typedef enum {
+    /**
+     * The key went down (make code).
+     */
     KEY_PRESSED,
+
+    /**
+     * The key was let go (break code).
+     */
     KEY_RELEASED
 } KeyState;
 
@@ -145,6 +152,9 @@ typedef enum {
  * modifiers and "is active" for locks (toggled on each press).
  */
 typedef struct {
+    /**
+     * True while the corresponding modifier key is held down.
+     */
     bool lshift;
     bool rshift;
 
@@ -157,6 +167,10 @@ typedef struct {
     bool lsuper;
     bool rsuper;
 
+    /**
+     * True while the corresponding lock is active. Toggled on each
+     * press of its key (releases are ignored).
+     */
     bool caps_lock;
     bool num_lock;
     bool scroll_lock;

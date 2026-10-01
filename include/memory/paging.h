@@ -70,7 +70,49 @@ typedef PageTableEntry PageTable[512];
  */
 void paging_init(void);
 
+/**
+ * Maps a single 4KB page: virtual_address -> physical_address.
+ *
+ * Walks the PML4/PDPT/PD/PT hierarchy for virtual_address, creating
+ * any missing intermediate table with pmm_alloc_page() (marked
+ * PAGE_PRESENT | PAGE_WRITABLE), then writes the final PT entry as
+ * physical_address | flags. Intermediate tables created before a
+ * failure are kept, not rolled back.
+ *
+ * The caller must include PAGE_PRESENT in flags, or the entry will
+ * not be valid. The physical page is not allocated here, and is not
+ * freed on failure: it stays owned by the caller.
+ *
+ * Must be called after paging_init().
+ *
+ * @param virtual_address Virtual address to map (page-aligned).
+ * @param physical_address Physical address of the page to map
+ *                         (page-aligned).
+ * @param flags Combination of PAGE_* flags for the mapping
+ *              (e.g. PAGE_PRESENT | PAGE_WRITABLE).
+ * @return true on success; false if either address is not
+ *         page-aligned, if virtual_address is already mapped, if it
+ *         falls inside a 2MB huge page (PAGE_HUGE), or if an
+ *         intermediate table could not be allocated.
+ */
 bool paging_map_page(u64 virtual_address, u64 physical_address, u64 flags);
+
+/**
+ * Unmaps a single 4KB page.
+ *
+ * Clears the PT entry for virtual_address and invalidates its TLB
+ * entry.
+ *
+ * The physical page that was mapped is NOT freed, and intermediate
+ * tables are kept even if they become empty. To release the memory,
+ * get the physical address with virtual_to_physical() before
+ * unmapping and pass it to pmm_free_page() afterwards.
+ *
+ * @param virtual_address Virtual address to unmap (page-aligned).
+ * @return true on success; false if virtual_address is not
+ *         page-aligned, is not mapped, or is covered by a 2MB huge
+ *         page (PAGE_HUGE).
+ */
 bool paging_unmap_page(u64 virtual_address);
 
 /**

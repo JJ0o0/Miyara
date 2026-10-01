@@ -8,6 +8,9 @@
  * Identifies which member of EventData an Event carries.
  */
 typedef enum {
+    /**
+     * A key press or release; the payload is EventData.keyboard.
+     */
     EVENT_KEYBOARD
 } EventType;
 
