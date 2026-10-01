@@ -15,4 +15,7 @@
  */
 u64 ceil_div(u64 a, u64 b);
 
+u64 align_up(u64 value, u64 alignment);
+u64 align_down(u64 value, u64 alignment);
+
 #endif

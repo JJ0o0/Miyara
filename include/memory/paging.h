@@ -70,6 +70,9 @@ typedef PageTableEntry PageTable[512];
  */
 void paging_init(void);
 
+bool paging_map_page(u64 virtual_address, u64 physical_address, u64 flags);
+bool paging_unmap_page(u64 virtual_address);
+
 /**
  * Converts a physical address to its direct-mapped virtual address.
  *
@@ -101,4 +104,5 @@ bool physical_to_virtual(u64 physical_address, u64* virtual_address);
  *         virtual_address is below DIRECT_MAP_BASE.
  */
 bool virtual_to_physical(u64 virtual_address, u64* physical_address);
+
 #endif

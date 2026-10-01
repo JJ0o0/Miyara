@@ -22,9 +22,7 @@ static u64 paging_pd_index(u64 virtual_address);
 static u64 paging_pt_index(u64 virtual_address);
 
 static bool paging_translate(u64 virtual_address, u64* physical_address);
-static bool paging_map_page(u64 virtual_address, u64 physical_address, u64 flags);
 static bool paging_map_huge_page(u64 virtual_address, u64 physical_address, u64 flags);
-static bool paging_unmap_page(u64 virtual_address);
 
 static bool paging_set_flags(u64 virtual_address, u64 flags);
 static bool paging_get_flags(u64 virtual_address, u64* flags);
@@ -33,9 +31,6 @@ static PageTable* paging_create_table(PageTableEntry* entry);
 static PageTable* paging_get_table(PageTableEntry entry);
 
 static PagingWalkType paging_walk(u64 virtual_address, PageTableEntry** entry);
-
-static u64 align_up(u64 value, u64 alignment);
-static u64 align_down(u64 value, u64 alignment);
 
 void paging_init(void) {
     u64 pml4_page = pmm_alloc_page();
@@ -83,6 +78,63 @@ void paging_init(void) {
     pml4 = (PageTable*)virtual_pml4_page_address;
 }
 
+bool paging_map_page(u64 virtual_address, u64 physical_address, u64 flags) {
+    if (physical_address % PAGE_SIZE != 0) {
+        return false;
+    }
+
+    if (virtual_address % PAGE_SIZE != 0) {
+        return false;
+    }
+    
+    u64 pml4_index = paging_pml4_index(virtual_address);
+    PageTable* pdpt = paging_create_table(&pml4[0][pml4_index]);
+    if (pdpt == NULL) {
+        return false;
+    }
+
+    u64 pdpt_index = paging_pdpt_index(virtual_address);
+    PageTable* pd = paging_create_table(&pdpt[0][pdpt_index]);
+    if (pd == NULL) {
+        return false;
+    }
+
+    u64 pd_index = paging_pd_index(virtual_address);
+    if (pd[0][pd_index] & PAGE_HUGE) {
+        return false;
+    }
+
+    PageTable* pt = paging_create_table(&pd[0][pd_index]);
+    if (pt == NULL) {
+        return false;
+    }
+
+    u64 pt_index = paging_pt_index(virtual_address);
+    if (pt[0][pt_index] != 0) {
+        return false;
+    }
+    
+    pt[0][pt_index] = physical_address | flags;
+    return true;
+}
+
+bool paging_unmap_page(u64 virtual_address) {
+    if (virtual_address % PAGE_SIZE != 0) {
+        return false;
+    }
+
+    PageTableEntry* entry;
+    PagingWalkType type = paging_walk(virtual_address, &entry);
+    if (type == PAGING_WALK_NOT_MAPPED || type == PAGING_WALK_HUGE) {
+        return false;
+    }
+
+    *entry = 0;
+    paging_invalidate_page(virtual_address);
+
+    return true;
+}
+
 bool physical_to_virtual(u64 physical_address, u64* virtual_address) {
     if (virtual_address == NULL) {
         return false;
@@ -93,16 +145,7 @@ bool physical_to_virtual(u64 physical_address, u64* virtual_address) {
 }
 
 bool virtual_to_physical(u64 virtual_address, u64* physical_address) {
-    if (physical_address == NULL) {
-        return false;
-    }
-
-    if (virtual_address < DIRECT_MAP_BASE) {
-        return false;
-    }
-
-    *physical_address = virtual_address - DIRECT_MAP_BASE;
-    return true;
+    return paging_translate(virtual_address, physical_address);
 }
 
 static bool paging_init_direct_map(void) {
@@ -208,46 +251,6 @@ static bool paging_translate(u64 virtual_address, u64* physical_address) {
     return true;
 }
 
-static bool paging_map_page(u64 virtual_address, u64 physical_address, u64 flags) {
-    if (physical_address % PAGE_SIZE != 0) {
-        return false;
-    }
-
-    if (virtual_address % PAGE_SIZE != 0) {
-        return false;
-    }
-    
-    u64 pml4_index = paging_pml4_index(virtual_address);
-    PageTable* pdpt = paging_create_table(&pml4[0][pml4_index]);
-    if (pdpt == NULL) {
-        return false;
-    }
-
-    u64 pdpt_index = paging_pdpt_index(virtual_address);
-    PageTable* pd = paging_create_table(&pdpt[0][pdpt_index]);
-    if (pd == NULL) {
-        return false;
-    }
-
-    u64 pd_index = paging_pd_index(virtual_address);
-    if (pd[0][pd_index] & PAGE_HUGE) {
-        return false;
-    }
-
-    PageTable* pt = paging_create_table(&pd[0][pd_index]);
-    if (pt == NULL) {
-        return false;
-    }
-
-    u64 pt_index = paging_pt_index(virtual_address);
-    if (pt[0][pt_index] != 0) {
-        return false;
-    }
-    
-    pt[0][pt_index] = physical_address | flags;
-    return true;
-}
-
 static bool paging_map_huge_page(u64 virtual_address, u64 physical_address, u64 flags) {
     if (physical_address % HUGE_PAGE_SIZE != 0) {
         return false;
@@ -275,23 +278,6 @@ static bool paging_map_huge_page(u64 virtual_address, u64 physical_address, u64 
     }
 
     pd[0][pd_index] = physical_address | flags | PAGE_HUGE;
-
-    return true;
-}
-
-static bool paging_unmap_page(u64 virtual_address) {
-    if (virtual_address % PAGE_SIZE != 0) {
-        return false;
-    }
-
-    PageTableEntry* entry;
-    PagingWalkType type = paging_walk(virtual_address, &entry);
-    if (type == PAGING_WALK_NOT_MAPPED || type == PAGING_WALK_HUGE) {
-        return false;
-    }
-
-    *entry = 0;
-    paging_invalidate_page(virtual_address);
 
     return true;
 }
@@ -425,12 +411,4 @@ static PagingWalkType paging_walk(u64 virtual_address, PageTableEntry** entry) {
 
     *entry = &pt[0][pt_index];
     return PAGING_WALK_PAGE;
-}
-
-static u64 align_up(u64 value, u64 alignment) {
-    return ceil_div(value, alignment) * alignment;
-}
-
-static u64 align_down(u64 value, u64 alignment) {
-    return (value / alignment) * alignment;
 }

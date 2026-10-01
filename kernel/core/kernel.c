@@ -11,6 +11,7 @@
 #include <types/types.h>
 
 #include <memory/paging.h>
+#include <memory/heap.h>
 #include <memory/pmm.h>
 
 #include <log/log.h>
@@ -32,6 +33,10 @@ void kernel_main(u64 multiboot_info_address) {
     log(LOG_INFO, "Initializing Paging...");
     paging_init();
     log(LOG_SUCCESS, "Initialized Paging.");
+
+    log(LOG_INFO, "Initializing Heap...");
+    heap_init();
+    log(LOG_SUCCESS, "Initialized Heap.");
 
     log(LOG_INFO, "Initializing PIC...");
     pic_init();
