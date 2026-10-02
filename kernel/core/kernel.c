@@ -57,7 +57,7 @@ void kernel_main(u64 multiboot_info_address) {
     log(LOG_INFO, "Enabling Interrupts...");
     enable_interrupts();
     log(LOG_SUCCESS, "Enabled Interrupts.");
-
+    
     term_write(&term, "\nWelcome to Miyara\n");
 
     while (1) {}

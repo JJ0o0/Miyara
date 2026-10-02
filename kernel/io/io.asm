@@ -1,6 +1,10 @@
 global io_in8
 global io_out8
 global enable_interrupts
+global disable_interrupts
+global interrupts_enabled
+global interrupts_save_and_disable
+global interrupts_restore
 
 section .text
     ; io_in8(u16)
@@ -26,4 +30,52 @@ section .text
     ; return void
     enable_interrupts:
         sti
+        ret
+    
+    ; disable_interrupts()
+    ; return void
+    disable_interrupts:
+        cli
+        ret
+    
+    ; interrupts_enabled()
+    ; return bool (RAX)
+    interrupts_enabled:
+        pushfq
+        pop rax
+
+        test rax, 0x200
+
+        setnz al
+        movzx rax, al
+
+        ret
+    
+    ; interrupts_save_and_disable(bool*)
+    ; bool* was_enabled (RDI)
+    ; return void
+    interrupts_save_and_disable:
+        pushfq
+        pop rax
+
+        test rax, 0x200
+
+        setnz al
+        mov [rdi], al
+
+        cli
+        ret
+    
+    ; interrupts_restore(bool)
+    ; bool was_enabled (RDI)
+    ; return void
+    interrupts_restore:
+        test dil, dil
+        jz .interrupts_restore_done
+
+        sti
+        ret
+    
+    .interrupts_restore_done:
+        cli
         ret

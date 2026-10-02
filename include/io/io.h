@@ -33,4 +33,45 @@ void io_out8(u16 port, u8 value);
  */
 void enable_interrupts(void);
 
+/**
+ * Disables maskable interrupts on the current CPU (cli).
+ *
+ * Clears the IF flag. The previous state is not remembered, so use
+ * interrupts_save_and_disable() when it needs to be restored later.
+ */
+void disable_interrupts(void);
+
+/**
+ * Checks whether maskable interrupts are currently enabled.
+ *
+ * Reads the IF flag (bit 9) of RFLAGS.
+ *
+ * @return true if interrupts are enabled, false otherwise.
+ */
+bool interrupts_enabled(void);
+
+/**
+ * Saves the current interrupt state and disables interrupts.
+ *
+ * Opens a critical section that is safe to use even if interrupts
+ * were already disabled (e.g. nested sections or inside an IRQ
+ * handler). Must be paired with interrupts_restore(), passing back
+ * the value stored in was_enabled.
+ *
+ * @param was_enabled Output parameter; set to true if interrupts
+ *                    were enabled before the call, false if they
+ *                    were already disabled. Must not be NULL.
+ */
+void interrupts_save_and_disable(bool* was_enabled);
+
+/**
+ * Restores the interrupt state saved by interrupts_save_and_disable().
+ *
+ * Enables interrupts only if was_enabled is true; otherwise they are
+ * left disabled, so an outer critical section is not ended early.
+ *
+ * @param was_enabled Value obtained from interrupts_save_and_disable().
+ */
+void interrupts_restore(bool was_enabled);
+
 #endif
