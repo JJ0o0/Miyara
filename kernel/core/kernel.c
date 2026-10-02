@@ -17,7 +17,21 @@
 #include <log/log.h>
 #include <cpu/cpu.h>
 
+#include <io/ps2.h>
 #include <io/io.h>
+
+static void ps2_test(void) {
+    log(LOG_DEBUG, "PS/2: testing controller communication...");
+    ps2_write_command(0x20);
+
+    u8 config;
+    if (!ps2_read_data(&config)) {
+        log(LOG_ERROR, "PS/2: failed to read controller configuration byte");
+        return;
+    }
+
+    log_hex(LOG_DEBUG, "PS/2: controller configuration", config);
+}
 
 void kernel_main(u64 multiboot_info_address) {
     Terminal term = create_terminal();

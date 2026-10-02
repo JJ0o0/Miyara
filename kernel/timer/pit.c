@@ -1,4 +1,5 @@
 #include <timer/pit.h>
+#include <timer/timer.h>
 #include <io/io.h>
 
 #define PIT_BASE_FREQUENCY 1193182u
@@ -6,6 +7,12 @@
 #define PIT_COMMAND 0x43
 
 void pit_init(u16 frequency) {
+    if (frequency == 0) {
+        return;
+    }
+
+    timer_set_frequency(frequency);
+
     // Command Byte
     io_out8(PIT_COMMAND, 0x36);
 

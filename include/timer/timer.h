@@ -20,4 +20,9 @@ void timer_tick(void);
  */
 u64 timer_get_ticks(void);
 
+void timer_set_frequency(u64 value);
+u64 timer_get_frequency(void);
+
+u64 timer_ticks_from_ms(u64 milliseconds);
+
 #endif
