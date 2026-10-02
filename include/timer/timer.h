@@ -20,15 +20,4 @@ void timer_tick(void);
  */
 u64 timer_get_ticks(void);
 
-/**
- * Busy-waits until the given number of ticks has elapsed.
- *
- * Spins on timer_get_ticks() rather than sleeping, so it burns CPU
- * time for the whole wait. Interrupts must be enabled for the tick
- * counter to advance while waiting.
- *
- * @param ticks_to_wait Number of ticks to wait for.
- */
-void timer_wait_ticks(u64 ticks_to_wait);
-
 #endif
