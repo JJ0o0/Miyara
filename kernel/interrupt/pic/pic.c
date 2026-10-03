@@ -19,7 +19,7 @@ void pic_init(void) {
     io_out8(PIC_SLAVE_DATA, 0x01);
 
     // IMR Setup
-    io_out8(PIC_MASTER_DATA, 0xF8); // Timer, Keyboand and Slave Bridge.
+    io_out8(PIC_MASTER_DATA, 0xF8); // Timer, Keyboard and Slave Bridge.
     io_out8(PIC_SLAVE_DATA, 0xFF);  // Nothing.
 }
 

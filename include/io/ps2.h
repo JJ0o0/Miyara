@@ -6,9 +6,15 @@
 bool ps2_wait_input(void);
 bool ps2_wait_output(void);
 
-void ps2_write_command(u8 command);
+bool ps2_write_command(u8 command);
 
-void ps2_write_data(u8 data);
+bool ps2_write_data(u8 data);
 bool ps2_read_data(u8* data);
+
+bool ps2_read_config(u8* config);
+bool ps2_write_config(u8 config);
+
+bool ps2_enable_second_port(void);
+bool ps2_write_second_port(u8 data);
 
 #endif
