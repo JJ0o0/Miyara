@@ -3,6 +3,8 @@
 
 #include <types/types.h>
 
+void ps2_init(void);
+
 bool ps2_wait_input(void);
 bool ps2_wait_output(void);
 
@@ -10,11 +12,21 @@ bool ps2_write_command(u8 command);
 
 bool ps2_write_data(u8 data);
 bool ps2_read_data(u8* data);
+bool ps2_data_available(void);
 
 bool ps2_read_config(u8* config);
 bool ps2_write_config(u8 config);
 
+bool ps2_enable_first_port(void);
+bool ps2_disable_first_port(void);
+bool ps2_write_first_port(u8 data);
+
 bool ps2_enable_second_port(void);
+bool ps2_disable_second_port(void);
 bool ps2_write_second_port(u8 data);
+
+bool ps2_controller_self_test(void);
+bool ps2_test_first_port(void);
+bool ps2_test_second_port(void);
 
 #endif

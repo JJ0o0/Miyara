@@ -195,6 +195,8 @@ static void keyboard_state_update(KeyboardState* state, KeyEvent event) {
 
             state->scroll_lock = !state->scroll_lock;
             break;
+        default:
+            break;
     }
 }
 

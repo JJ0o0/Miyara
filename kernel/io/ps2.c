@@ -1,19 +1,57 @@
 #include <io/ps2.h>
 #include <io/io.h>
 
-#define PS2_IO_DATA                 0x60
-#define PS2_IO_STATUS               0x64
+#define PS2_IO_DATA                  0x60
+#define PS2_IO_STATUS                0x64
 
-#define PS2_STATUS_OUTPUT_FULL      0x01
-#define PS2_STATUS_INPUT_FULL       0x02
+#define PS2_STATUS_OUTPUT_FULL       0x01
+#define PS2_STATUS_INPUT_FULL        0x02
 
-#define PS2_CMD_READ_CONFIG         0x20
-#define PS2_CMD_WRITE_CONFIG        0x60
+#define PS2_CMD_READ_CONFIG          0x20
+#define PS2_CMD_WRITE_CONFIG         0x60
 
-#define PS2_CMD_ENABLE_SECOND_PORT  0xA8
-#define PS2_CMD_WRITE_SECOND_PORT   0xD4
+#define PS2_CMD_ENABLE_FIRST_PORT    0xAE
+#define PS2_CMD_DISABLE_FIRST_PORT   0xAD
 
-#define PS2_TIMEOUT_ITERATIONS      10000UL
+#define PS2_CMD_ENABLE_SECOND_PORT   0xA8
+#define PS2_CMD_DISABLE_SECOND_PORT  0xA7
+#define PS2_CMD_WRITE_SECOND_PORT    0xD4
+
+#define PS2_CMD_CONTROLLER_SELF_TEST 0xAA
+#define PS2_CMD_FIRST_PORT_TEST      0xAB
+#define PS2_CMD_SECOND_PORT_TEST     0xA9
+
+#define PS2_SELF_TEST_OK             0x55
+#define PS2_FIRST_PORT_TEST_OK       0x00
+#define PS2_SECOND_PORT_TEST_OK      0x00
+
+#define PS2_TIMEOUT_ITERATIONS       10000UL
+
+static void ps2_flush(void);
+
+void ps2_init(void) {
+    if (!ps2_disable_first_port()) {
+        return;
+    }
+
+    if (!ps2_disable_second_port()) {
+        return;
+    }
+
+    ps2_flush();
+
+    if (!ps2_controller_self_test()) {
+        return;
+    }
+
+    if (!ps2_test_first_port()) {
+        return;
+    }
+
+    if (!ps2_test_second_port()) {
+        return;
+    }
+}
 
 bool ps2_wait_input(void) {
     for (u64 tries = 0; tries < PS2_TIMEOUT_ITERATIONS; tries++) {
@@ -62,6 +100,10 @@ bool ps2_read_data(u8* data) {
     return true;
 }
 
+bool ps2_data_available(void) {
+    return (io_in8(PS2_IO_STATUS) & PS2_STATUS_OUTPUT_FULL) != 0;
+}
+
 bool ps2_read_config(u8* config) {
     if (!ps2_write_command(PS2_CMD_READ_CONFIG)) {
         return false;
@@ -78,8 +120,24 @@ bool ps2_write_config(u8 config) {
     return ps2_write_data(config);
 }
 
+bool ps2_enable_first_port(void) {
+    return ps2_write_command(PS2_CMD_ENABLE_FIRST_PORT);
+}
+
+bool ps2_disable_first_port(void) {
+    return ps2_write_command(PS2_CMD_DISABLE_FIRST_PORT);
+}
+
+bool ps2_write_first_port(u8 data) {
+    return ps2_write_data(data);
+}
+
 bool ps2_enable_second_port(void) {
     return ps2_write_command(PS2_CMD_ENABLE_SECOND_PORT);
+}
+
+bool ps2_disable_second_port(void) {
+    return ps2_write_command(PS2_CMD_DISABLE_SECOND_PORT);
 }
 
 bool ps2_write_second_port(u8 data) {
@@ -88,4 +146,53 @@ bool ps2_write_second_port(u8 data) {
     }
 
     return ps2_write_data(data);
+}
+
+bool ps2_controller_self_test(void) {
+    if (!ps2_write_command(PS2_CMD_CONTROLLER_SELF_TEST)) {
+        return false;
+    }
+
+    u8 response;
+    if (!ps2_read_data(&response)) {
+        return false;
+    }
+
+    return response == PS2_SELF_TEST_OK;
+}
+
+bool ps2_test_first_port(void) {
+    if (!ps2_write_command(PS2_CMD_FIRST_PORT_TEST)) {
+        return false;
+    }
+
+    u8 response;
+    if (!ps2_read_data(&response)) {
+        return false;
+    }
+
+    return response == PS2_FIRST_PORT_TEST_OK;
+}
+
+bool ps2_test_second_port(void) {
+    if (!ps2_write_command(PS2_CMD_SECOND_PORT_TEST)) {
+        return false;
+    }
+
+    u8 response;
+    if (!ps2_read_data(&response)) {
+        return false;
+    }
+
+    return response == PS2_SECOND_PORT_TEST_OK;
+}
+
+static void ps2_flush(void) {
+    while (ps2_data_available()) {
+        u8 data;
+
+        if (!ps2_read_data(&data)) {
+            break;
+        }
+    }
 }

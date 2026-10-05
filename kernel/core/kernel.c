@@ -55,6 +55,10 @@ void kernel_main(u64 multiboot_info_address) {
         pit_init(100);
     log(LOG_SUCCESS, "Initialized PIT.");
 
+    log(LOG_INFO, "Initializing PS/2 ports...");
+        ps2_init();
+    log(LOG_SUCCESS, "Initialized PS/2 ports.");
+
     log(LOG_INFO, "Enabling Interrupts...");
         enable_interrupts();
     log(LOG_SUCCESS, "Enabled Interrupts.");
