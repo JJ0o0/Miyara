@@ -178,6 +178,10 @@ bool ps2_read_data(u8* data) {
     return true;
 }
 
+u8 ps2_read_data_now(void) {
+    return io_in8(PS2_IO_DATA);
+}
+
 bool ps2_data_available(void) {
     return (io_in8(PS2_IO_STATUS) & PS2_STATUS_OUTPUT_FULL) != 0;
 }

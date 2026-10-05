@@ -93,6 +93,8 @@ bool ps2_write_data(u8 data);
  */
 bool ps2_read_data(u8* data);
 
+u8 ps2_read_data_now(void);
+
 /**
  * Checks whether the controller has a byte waiting to be read.
  *

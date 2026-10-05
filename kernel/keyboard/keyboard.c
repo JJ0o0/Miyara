@@ -1,7 +1,9 @@
 #include <keyboard/keyboard.h>
+
 #include <types/types.h>
+
 #include <event/event.h>
-#include <io/io.h>
+#include <io/ps2.h>
 
 static const KeyCode keymap[256] = {
     [0x1E] = KEY_A,
@@ -134,7 +136,7 @@ static bool keyboard_parse_e1(u8 scancode, KeyEvent* event);
 static bool keyboard_parse_print_screen(u8 scancode, KeyEvent* event);
 
 void keyboard_handle(void) {
-    u8 scancode = io_in8(0x60);
+    u8 scancode = ps2_read_data_now();
 
     KeyEvent event;
     if (!keyboard_parse_scancode(scancode, &event)) {
@@ -236,29 +238,39 @@ static bool keyboard_parse_scancode(u8 scancode, KeyEvent* event) {
 
     u8 code = scancode & 0x7F;
     event->key = scancode_state == SCANCODE_EXTENDED 
-                    ? extended_keymap[code] 
-                    : keymap[code];
-
+                                ? extended_keymap[code] 
+                                : keymap[code];
+    
     scancode_state = SCANCODE_NORMAL;
+
+    if (event->key == KEY_UNKNOWN) {
+        return false;
+    }
 
     event->state = scancode & 0x80 ? KEY_RELEASED : KEY_PRESSED;
     return true;
 }
 
 static bool keyboard_parse_e1(u8 scancode, KeyEvent* event) {
-    e1_bytes++;
-
-    if (e1_bytes == 5) {
-        event->key = KEY_PAUSE;
-        event->state = KEY_PRESSED;
-
+    const u8 expected[] = { 0x1D, 0x45, 0xE1, 0x9D, 0xC5 };
+    if (scancode != expected[e1_bytes]) {
         scancode_state = SCANCODE_NORMAL;
         e1_bytes = 0;
+        return false;
+    }
+    
+    e1_bytes++;
 
-        return true;
+    if (e1_bytes < sizeof(expected)) {
+        return false;
     }
 
-    return false;
+    event->key = KEY_PAUSE;
+    event->state = KEY_PRESSED;
+
+    scancode_state = SCANCODE_NORMAL;
+    e1_bytes = 0;
+    return true;
 }
 
 static bool keyboard_parse_print_screen(u8 scancode, KeyEvent* event) {
