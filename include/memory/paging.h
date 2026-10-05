@@ -12,7 +12,24 @@
  * 64-bit address space, well away from any future kernel image or
  * heap mappings.
  */
-#define DIRECT_MAP_BASE 0xFFFF800000000000ULL
+#define DIRECT_MAP_BASE          0xFFFF800000000000ULL
+
+/**
+ * Virtual base address of the kernel heap.
+ *
+ * Placed in the higher half, after the direct physical memory map
+ * (see DIRECT_MAP_BASE).
+ */
+#define HEAP_START               0xFFFF900000000000ULL
+
+/**
+ * Virtual base address where the framebuffer is mapped.
+ *
+ * Used by framebuffer_map(). Placed in the higher half in a range of
+ * its own, after the kernel heap (see HEAP_START): the heap grows
+ * from HEAP_START up to HEAP_SIZE, so the two never overlap.
+ */
+#define FRAMEBUFFER_VIRTUAL_BASE 0xFFFFA00000000000ULL
 
 /**
  * Size of a huge (2MB) page, in bytes. A huge page is mapped at the
@@ -132,18 +149,19 @@ bool paging_unmap_page(u64 virtual_address);
 bool physical_to_virtual(u64 physical_address, u64* virtual_address);
 
 /**
- * Converts a direct-mapped virtual address back to its physical
- * address.
+ * Translates a virtual address to the physical address it is mapped
+ * to.
  *
- * Only valid for addresses previously obtained from
- * physical_to_virtual (or otherwise known to lie in the direct map,
- * i.e. >= DIRECT_MAP_BASE).
+ * Walks the page tables, so it works for any mapped address, not only
+ * the direct map: 4KB pages (such as the heap and the framebuffer)
+ * and 2MB huge pages alike. The offset inside the page is preserved,
+ * so virtual_address does not need to be page-aligned.
  *
- * @param virtual_address Direct-mapped virtual address to convert.
+ * @param virtual_address Virtual address to translate.
  * @param physical_address Output parameter; filled with the
  *                          corresponding physical address on success.
  * @return true on success, false if physical_address is NULL or
- *         virtual_address is below DIRECT_MAP_BASE.
+ *         virtual_address is not mapped.
  */
 bool virtual_to_physical(u64 virtual_address, u64* physical_address);
 

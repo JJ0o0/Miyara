@@ -19,3 +19,15 @@ u64 align_down(u64 value, u64 alignment) {
 
     return (value / alignment) * alignment;
 }
+
+i32 clamp_i32(i32 value, i32 min, i32 max) {
+    if (value < min) {
+        return min;
+    }
+
+    if (value > max) {
+        return max;
+    }
+
+    return value;
+}

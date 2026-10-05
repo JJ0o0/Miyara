@@ -1,9 +1,13 @@
 #include <graphics/framebuffer.h>
-#include <log/log.h>
 
-#define MULTIBOOT_FRAMEBUFFER_TYPE_RGB 1
+#include <memory/paging.h>
+#include <memory/pmm.h>
+
+#include <math/math.h>
 
 static Framebuffer framebuffer;
+
+static u32 framebuffer_encode_color(Color color);
 
 bool framebuffer_init(MBIHeader *mbi) {
     TagHeader* current_tag = (TagHeader*)((u8*)mbi + 0x8);
@@ -11,15 +15,25 @@ bool framebuffer_init(MBIHeader *mbi) {
     while (current_tag->type != 0) {
         if (current_tag->type == MULTIBOOT_TAG_TYPE_FRAMEBUFFER) {
             fb_tag = (FramebufferTag*)current_tag;
-            if (fb_tag->framebuffer_type != MULTIBOOT_FRAMEBUFFER_TYPE_RGB) {
+            if (fb_tag->framebuffer_type != MULTIBOOT_FRAMEBUFFER_TYPE_RGB || fb_tag->framebuffer_bpp != 32) {
                 return false;
             }
 
-            framebuffer.address = fb_tag->framebuffer_addr;
+            FramebufferRGBInfo* rgb_info = (FramebufferRGBInfo*)((u8*)fb_tag + sizeof(FramebufferTag));
+            if (
+                rgb_info->red_mask_size != 8 ||
+                rgb_info->green_mask_size != 8 ||
+                rgb_info->blue_mask_size != 8
+            ) {
+                return false;
+            }
+
+            framebuffer.physical_address = fb_tag->framebuffer_addr;
             framebuffer.width = fb_tag->framebuffer_width;
             framebuffer.height = fb_tag->framebuffer_height;
             framebuffer.pitch = fb_tag->framebuffer_pitch;
             framebuffer.bpp = fb_tag->framebuffer_bpp;
+            framebuffer.rgb = *rgb_info;
             break;
         }
 
@@ -35,4 +49,69 @@ bool framebuffer_init(MBIHeader *mbi) {
     }
 
     return fb_tag != NULL;
+}
+
+bool framebuffer_map(void) {
+    u64 physical_start = align_down(framebuffer.physical_address, PAGE_SIZE);
+    u64 offset = framebuffer.physical_address - physical_start;
+    u64 size = (u64)framebuffer.pitch * framebuffer.height;
+    u64 total_size = offset + size;
+    u64 page_count = ceil_div(total_size, PAGE_SIZE);
+
+    for (u64 i = 0; i < page_count; i++) {
+        u64 physical = physical_start + (i * PAGE_SIZE);
+        u64 virtual = FRAMEBUFFER_VIRTUAL_BASE + (i * PAGE_SIZE);
+
+        if (!paging_map_page(virtual, physical, PAGE_PRESENT | PAGE_WRITABLE)) {
+            return false;
+        }
+    }
+
+    framebuffer.virtual_address = FRAMEBUFFER_VIRTUAL_BASE + offset;
+    return true;
+}
+
+u32 framebuffer_get_width(void) {
+    return framebuffer.width;
+}
+
+u32 framebuffer_get_height(void) {
+    return framebuffer.height;
+}
+
+void framebuffer_put_pixel(u32 x, u32 y, Color color) {
+    if (x >= framebuffer.width || y >= framebuffer.height) {
+        return;
+    }
+
+    u8 bytes_per_pixel = framebuffer.bpp / 8;
+    u64 pixel_address = framebuffer.virtual_address + ((u64)y * framebuffer.pitch) + ((u64)x * bytes_per_pixel);
+    u32 encoded_color = framebuffer_encode_color(color);
+
+    u32* pixel = (u32*)pixel_address;
+    *pixel = encoded_color;
+}
+
+void framebuffer_clear(Color color) {
+    for (u32 y = 0; y < framebuffer.height; y++) {
+        for (u32 x = 0; x < framebuffer.width; x++) {
+            framebuffer_put_pixel(x, y, color);
+        }
+    }
+}
+
+void framebuffer_fill_rect(u32 x, u32 y, u32 width, u32 height, Color color) {
+    for (u32 py = y; py < y + height; py++) {
+        for (u32 px = x; px < x + width; px++) {
+            framebuffer_put_pixel(px, py, color);
+        }
+    }
+}
+
+static u32 framebuffer_encode_color(Color color) {
+    u32 red = (u32)color.r << framebuffer.rgb.red_field_position;
+    u32 green = (u32)color.g << framebuffer.rgb.green_field_position;
+    u32 blue = (u32)color.b << framebuffer.rgb.blue_field_position;
+
+    return red | green | blue;
 }

@@ -41,4 +41,20 @@ u64 align_up(u64 value, u64 alignment);
  */
 u64 align_down(u64 value, u64 alignment);
 
+/**
+ * Limits a value to the range [min, max].
+ *
+ * Returns min if value is below it, max if value is above it, and
+ * value itself otherwise. Both bounds are inclusive.
+ *
+ * min must not be greater than max: with inverted bounds the result
+ * is not a meaningful clamp (it depends on where value falls).
+ *
+ * @param value Value to limit.
+ * @param min Lower bound of the range.
+ * @param max Upper bound of the range.
+ * @return value limited to the range [min, max].
+ */
+i32 clamp_i32(i32 value, i32 min, i32 max);
+
 #endif

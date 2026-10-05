@@ -38,6 +38,7 @@ void heap_init(void) {
         physical_page, 
         PAGE_PRESENT | PAGE_WRITABLE
     )) {
+        pmm_free_page(physical_page);
         return;
     }
 
@@ -52,7 +53,7 @@ void heap_init(void) {
 }
 
 void* k_malloc(u64 size) {
-    if (size == 0) {
+    if (size == 0 || size > HEAP_SIZE - sizeof(BlockHeader)) {
         return NULL;
     }
 

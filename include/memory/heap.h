@@ -1,15 +1,8 @@
 #ifndef HEAP_H
 #define HEAP_H
 
+#include <memory/paging.h>
 #include <types/types.h>
-
-/**
- * Virtual base address of the kernel heap.
- *
- * Placed in the higher half, after the direct physical memory map
- * (see DIRECT_MAP_BASE in paging.h).
- */
-#define HEAP_START 0xFFFF900000000000ULL
 
 /**
  * Maximum size of the kernel heap, in bytes (16MB).
@@ -22,6 +15,8 @@
 
 /**
  * First virtual address past the end of the heap (exclusive).
+ *
+ * HEAP_START, the other end, is defined in paging.h.
  */
 #define HEAP_END (HEAP_START + HEAP_SIZE)
 

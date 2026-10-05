@@ -1,7 +1,7 @@
-#include <event/event.h>
 #include <multiboot/multiboot.h>
 
 #include <graphics/framebuffer.h>
+#include <graphics/cursor.h>
 
 #include <terminal/terminal.h>
 
@@ -20,6 +20,7 @@
 #include <log/log.h>
 #include <cpu/cpu.h>
 
+#include <event/event.h>
 #include <mouse/mouse.h>
 #include <io/ps2.h>
 #include <io/io.h>
@@ -35,9 +36,17 @@ void kernel_main(u64 multiboot_info_address) {
         pmm_init(mbi);
     log(LOG_SUCCESS, "Initialized PMM.");
 
+    log(LOG_INFO, "Initializing Framebuffer...");
+        framebuffer_init(mbi);
+    log(LOG_SUCCESS, "Initialized Framebuffer.");
+
     log(LOG_INFO, "Initializing Paging...");
         paging_init();
     log(LOG_SUCCESS, "Initialized Paging.");
+
+    log(LOG_INFO, "Mapping Framebuffer...");
+        framebuffer_map();
+    log(LOG_SUCCESS, "Mapped Framebuffer.");
 
     log(LOG_INFO, "Initializing Heap...");
         heap_init();
@@ -55,10 +64,6 @@ void kernel_main(u64 multiboot_info_address) {
         cpu_init();
     log(LOG_SUCCESS, "Initialized CPU.");
 
-    log(LOG_INFO, "Initializing Framebuffer...");
-        framebuffer_init(mbi);
-    log(LOG_SUCCESS, "Initialized Framebuffer.");
-
     log(LOG_INFO, "Initializing PIT...");
         pit_init(100);
     log(LOG_SUCCESS, "Initialized PIT.");
@@ -74,8 +79,26 @@ void kernel_main(u64 multiboot_info_address) {
     log(LOG_INFO, "Enabling Interrupts...");
         enable_interrupts();
     log(LOG_SUCCESS, "Enabled Interrupts.");
-        
+    
+    log(LOG_INFO, "Initializing Cursor...");
+        cursor_init();
+        cursor_draw();
+    log(LOG_SUCCESS, "Initialized Cursor.");
+
     term_write(&term, "\nWelcome to Miyara\n");
 
-    while (1) {}
+    while (1) {
+        Event event;
+        if (!get_event(&event)) {
+            continue;
+        }
+
+        switch (event.type) {
+            case EVENT_MOUSE:
+                cursor_handle_mouse(event.data.mouse);
+                break;
+            case EVENT_KEYBOARD:
+                break;
+        }
+    }
 }
