@@ -3,12 +3,11 @@
 
 #include <keyboard/keyboard.h>
 #include <timer/timer.h>
+#include <mouse/mouse.h>
 
 #include <log/log.h>
 
 void irq_dispatch(u64 irq) {
-    // log_hex(LOG_DEBUG, "IRQ", irq);
-
     switch (irq) {
         // TIMER
         case 0:
@@ -17,6 +16,10 @@ void irq_dispatch(u64 irq) {
         // KEYBOARD
         case 1:
             keyboard_handle();
+            break;
+        // MOUSE
+        case 12:
+            mouse_handle();
             break;
     }
     

@@ -243,13 +243,26 @@ extern void isr_timer(void);
 extern void isr_keyboard(void);
 
 /**
+ * ISR stub for IRQ 12 (PS/2 mouse, vector 44).
+ *
+ * Saves the general-purpose registers, pushes the IRQ number (12)
+ * and jumps to common_irq_handler, which is expected to call
+ * irq_dispatch(12) and restore the registers before iretq.
+ *
+ * IRQ 12 comes from the slave PIC (offset 0x28, line 4), so its
+ * vector is 0x28 + 4 = 44, and its EOI must reach both PICs (see
+ * pic_send_eoi).
+ */
+extern void isr_mouse(void);
+
+/**
  * Common C entry point for hardware interrupts (IRQs).
  *
  * Called by the ISR stub after it has saved the general-purpose
  * registers. Unlike exception_dispatch, it does not receive a
- * CPUContext*, since isr_timer does not build one on the stack.
+ * CPUContext*, since the IRQ stubs do not build one on the stack.
  *
- * @param irq IRQ number (0 = timer/PIT).
+ * @param irq IRQ number (0 = timer/PIT, 1 = keyboard, 12 = mouse).
  */
 void irq_dispatch(u64 irq);
 

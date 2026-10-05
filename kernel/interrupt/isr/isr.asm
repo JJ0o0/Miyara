@@ -5,6 +5,7 @@ global isr_page_fault
 
 global isr_timer
 global isr_keyboard
+global isr_mouse
 
 extern common_exception_handler
 extern common_irq_handler
@@ -150,4 +151,26 @@ section .text
         push r15
 
         push qword 1
+        jmp common_irq_handler
+    
+    ; Mouse (Vector 44)
+    isr_mouse:
+        ; Save registers
+        push rax
+        push rbx
+        push rcx
+        push rdx
+        push rsi
+        push rdi
+        push rbp
+        push r8
+        push r9
+        push r10
+        push r11
+        push r12
+        push r13
+        push r14
+        push r15
+
+        push qword 12
         jmp common_irq_handler

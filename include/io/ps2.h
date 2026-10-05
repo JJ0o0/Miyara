@@ -93,6 +93,20 @@ bool ps2_write_data(u8 data);
  */
 bool ps2_read_data(u8* data);
 
+/**
+ * Reads a byte from the data port (0x60) without waiting.
+ *
+ * Unlike ps2_read_data(), this does not check the status register:
+ * if the output buffer is empty, the value returned is meaningless.
+ * Reading removes the byte from the buffer, as with any read of the
+ * data port.
+ *
+ * Meant for interrupt handlers (e.g. the keyboard IRQ), where the
+ * interrupt itself signals that a byte is waiting. Everywhere else,
+ * use ps2_read_data(), or check ps2_data_available() first.
+ *
+ * @return Byte read from the data port.
+ */
 u8 ps2_read_data_now(void);
 
 /**

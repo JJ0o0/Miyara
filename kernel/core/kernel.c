@@ -1,3 +1,4 @@
+#include <event/event.h>
 #include <multiboot/multiboot.h>
 
 #include <terminal/terminal.h>
@@ -17,6 +18,7 @@
 #include <log/log.h>
 #include <cpu/cpu.h>
 
+#include <mouse/mouse.h>
 #include <io/ps2.h>
 #include <io/io.h>
 
@@ -58,6 +60,10 @@ void kernel_main(u64 multiboot_info_address) {
     log(LOG_INFO, "Initializing PS/2 ports...");
         ps2_init();
     log(LOG_SUCCESS, "Initialized PS/2 ports.");
+
+    log(LOG_INFO, "Initializing Mouse...");
+        mouse_init();
+    log(LOG_SUCCESS, "Initialized Mouse.");
 
     log(LOG_INFO, "Enabling Interrupts...");
         enable_interrupts();

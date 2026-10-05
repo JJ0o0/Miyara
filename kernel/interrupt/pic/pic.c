@@ -19,11 +19,11 @@ void pic_init(void) {
     io_out8(PIC_SLAVE_DATA, 0x01);
 
     // IMR Setup
-    io_out8(PIC_MASTER_DATA, 0xF8); // Timer, Keyboard and Slave Bridge.
-    io_out8(PIC_SLAVE_DATA, 0xFF);  // Nothing.
+    io_out8(PIC_MASTER_DATA, 0xF8); // IRQs and Slave Bridge
+    io_out8(PIC_SLAVE_DATA, 0xEF);  // IRQ12
 }
 
 void pic_send_eoi(u8 irq) {
-    io_out8(PIC_MASTER_COMMAND, 0x20);
     if (irq >= 8) io_out8(PIC_SLAVE_COMMAND, 0x20);
+    io_out8(PIC_MASTER_COMMAND, 0x20);
 }
