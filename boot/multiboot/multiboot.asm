@@ -2,17 +2,29 @@ global _start
 extern kernel_main
 
 section .rodata
-    ; Multiboot
-    dd 0xE85250D6       ; Magic
-    dd 0x00000000       ; Architecture (0 = i386/protected mode)
-    dd 0x00000018       ; Header Length (this header, in bytes)
-    dd 0x17ADAF12       ; Checksum (-(magic + architecture + header length))
+    ; Multiboot Header
+    multiboot_header_start:
+        ; Multiboot
+        dd 0xE85250D6       ; Magic
+        dd 0x00000000       ; Architecture (0 = i386/protected mode)
+        dd 0x00000030       ; Header Length (this header, in bytes)
+        dd 0x17ADAEFA       ; Checksum (-(magic + architecture + header length))
 
-    ; END tag
-    dw 0                ; Type
-    dw 0                ; Flags
-    dd 8                ; Size (of this tag)
+        ; Framebuffer Tag
+        dw 5                ; Type = Framebuffer
+        dw 0                ; Flags
+        dd 20               ; Size
+        dd 1024             ; Preferred Width
+        dd 768              ; Preferred Height
+        dd 32               ; Preferred Depth
+        dd 0                ; Padding (Alinhamento de 8 Bytes)
 
+        ; END tag
+        dw 0                ; Type
+        dw 0                ; Flags
+        dd 8                ; Size (of this tag)
+    multiboot_header_end:
+    
     ; GDT
     gdt_start:
         ; Selector 0x00. Required null descriptor; never loaded.

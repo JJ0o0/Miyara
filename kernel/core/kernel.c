@@ -1,6 +1,8 @@
 #include <event/event.h>
 #include <multiboot/multiboot.h>
 
+#include <graphics/framebuffer.h>
+
 #include <terminal/terminal.h>
 
 #include <interrupt/idt.h>
@@ -52,6 +54,10 @@ void kernel_main(u64 multiboot_info_address) {
     log(LOG_INFO, "Initializing CPU...");
         cpu_init();
     log(LOG_SUCCESS, "Initialized CPU.");
+
+    log(LOG_INFO, "Initializing Framebuffer...");
+        framebuffer_init(mbi);
+    log(LOG_SUCCESS, "Initialized Framebuffer.");
 
     log(LOG_INFO, "Initializing PIT...");
         pit_init(100);

@@ -3,6 +3,8 @@
 
 #include <types/types.h>
 
+#define MULTIBOOT_TAG_TYPE_FRAMEBUFFER 8
+
 /**
  * Common header shared by every Multiboot2 info tag.
  *
@@ -72,6 +74,20 @@ typedef struct {
      */
     u32 entry_version;
 } MemoryMapTag;
+
+typedef struct {
+    u32 type;
+    u32 size;
+
+    u64 framebuffer_addr;
+    u32 framebuffer_pitch;
+    u32 framebuffer_width;
+    u32 framebuffer_height;
+
+    u8 framebuffer_bpp;
+    u8 framebuffer_type;
+    u16 reserved;
+} FramebufferTag;
 
 /**
  * A single memory map entry, describing one physical address range.
