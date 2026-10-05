@@ -25,11 +25,19 @@
 #define PS2_FIRST_PORT_TEST_OK       0x00
 #define PS2_SECOND_PORT_TEST_OK      0x00
 
+#define PS2_CONFIG_FIRST_PORT_INTERRUPT         0x01
+#define PS2_CONFIG_SECOND_PORT_INTERRUPT        0x02
+#define PS2_CONFIG_SYSTEM_FLAG                  0x04
+#define PS2_CONFIG_FIRST_PORT_CLOCK_DISABLED    0x10
+#define PS2_CONFIG_SECOND_PORT_CLOCK_DISABLED   0x20
+#define PS2_CONFIG_FIRST_PORT_TRANSLATION       0x40
+
 #define PS2_TIMEOUT_ITERATIONS       10000UL
 
 static void ps2_flush(void);
 
 void ps2_init(void) {
+    // Disable PS/2 ports
     if (!ps2_disable_first_port()) {
         return;
     }
@@ -38,17 +46,87 @@ void ps2_init(void) {
         return;
     }
 
+    // Flush controller output buffer
     ps2_flush();
 
+    // Configure controller initialization
+    u8 config;
+    if (!ps2_read_config(&config)) {
+        return;
+    }
+
+    config &= ~(PS2_CONFIG_FIRST_PORT_INTERRUPT | PS2_CONFIG_SECOND_PORT_INTERRUPT);
+
+    if (!ps2_write_config(config)) {
+        return;
+    }
+
+    // Controller self test
     if (!ps2_controller_self_test()) {
         return;
     }
 
+    // Restore configuration after self test
+    if (!ps2_read_config(&config)) {
+        return;
+    }
+
+    config &= ~(PS2_CONFIG_FIRST_PORT_INTERRUPT | PS2_CONFIG_SECOND_PORT_INTERRUPT);
+
+    if (!ps2_write_config(config)) {
+        return;
+    }
+
+    // Test first PS/2 port
     if (!ps2_test_first_port()) {
         return;
     }
 
-    if (!ps2_test_second_port()) {
+    // Detect second PS/2 port
+    if (!ps2_enable_second_port()) {
+        return;
+    }
+    
+    if (!ps2_read_config(&config)) {
+        return;
+    }
+
+    bool has_second_port = (config & PS2_CONFIG_SECOND_PORT_CLOCK_DISABLED) == 0;
+    if (!ps2_disable_second_port()) {
+        return;
+    }
+
+    // Test second PS/2 port
+    if (has_second_port) {
+        if (!ps2_test_second_port()) {
+            return;
+        }
+    }
+
+    // Final controller configuration
+    if (!ps2_enable_first_port()) {
+        return;
+    }
+
+    if (has_second_port) {
+        if (!ps2_enable_second_port()) {
+            return;
+        }
+    }
+
+    if (!ps2_read_config(&config)) {
+        return;
+    }
+
+    config |= PS2_CONFIG_FIRST_PORT_INTERRUPT;
+
+    if (has_second_port) {
+        config |= PS2_CONFIG_SECOND_PORT_INTERRUPT;
+    } else {
+        config &= ~PS2_CONFIG_SECOND_PORT_INTERRUPT;
+    }
+
+    if (!ps2_write_config(config)) {
         return;
     }
 }
