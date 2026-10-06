@@ -47,6 +47,12 @@ void font_draw_string(const BitmapFont* font, const char* text, Vector2u positio
     
     Vector2u current = position;
     for (size_t i = 0; text[i] != '\0'; i++) {
+        if (text[i] == '\n') {
+            current.x = position.x;
+            current.y += font->glyph_size.y;
+            continue;
+        }
+
         font_draw_char(font, text[i], current, color);
         current.x += font->glyph_size.x;
     }

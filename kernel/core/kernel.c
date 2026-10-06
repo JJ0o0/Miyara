@@ -92,7 +92,7 @@ void kernel_main(u64 multiboot_info_address) {
     
     renderer_clear((Color){30, 60, 120});
         font_draw_string(
-            &font8x8_basic_font, "Hello Miyara", 
+            &font8x8_basic_font, "Hello\nMiyara", 
             (Vector2u){100, 100}, (Color){255, 255, 255}
         );
     renderer_present();
