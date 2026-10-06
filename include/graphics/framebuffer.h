@@ -110,6 +110,65 @@ u32 framebuffer_get_width(void);
 u32 framebuffer_get_height(void);
 
 /**
+ * Encodes an RGB color using the pixel format reported by the framebuffer.
+ *
+ * The returned value is suitable for direct storage in the framebuffer or
+ * renderer backbuffer. The RGB channel positions are taken from the
+ * framebuffer information provided by Multiboot.
+ *
+ * @param color Color to encode.
+ *
+ * @return Encoded 32-bit framebuffer pixel value.
+ *
+ * @note The framebuffer must be initialized before calling this function.
+ * @note The current framebuffer implementation supports only 32-bit RGB
+ *       framebuffers with 8-bit red, green, and blue channels.
+ */
+u32 framebuffer_encode_color(Color color);
+
+/**
+ * Writes a complete sequence of pixels to a framebuffer scanline.
+ *
+ * Pixels are written starting at x = 0 on the specified scanline. The
+ * function respects the framebuffer pitch when calculating the destination
+ * address.
+ *
+ * If pixel_count is greater than the framebuffer width, the amount written
+ * is clipped to the framebuffer width.
+ *
+ * @param y           Destination scanline.
+ * @param pixels      Pointer to an array of encoded framebuffer pixels.
+ * @param pixel_count Number of pixels to write.
+ *
+ * @note pixels must contain pixels already encoded in the framebuffer's
+ *       native format.
+ * @note If y is outside the framebuffer or pixels is NULL, no data is written.
+ */
+void framebuffer_write_row(u32 y, const u32* pixels, u32 pixel_count);
+
+/**
+ * Writes a sequence of pixels to part of a framebuffer scanline.
+ *
+ * Pixels are written starting at the specified x coordinate on the specified
+ * scanline. The function respects the framebuffer pitch when calculating the
+ * destination address.
+ *
+ * If the requested range extends beyond the right edge of the framebuffer,
+ * pixel_count is clipped so that only visible pixels are written.
+ *
+ * @param x           Horizontal position where the write begins.
+ * @param y           Destination scanline.
+ * @param pixels      Pointer to an array of encoded framebuffer pixels.
+ * @param pixel_count Number of pixels to write.
+ *
+ * @note pixels must contain pixels already encoded in the framebuffer's
+ *       native format.
+ * @note If x or y is outside the framebuffer, or pixels is NULL, no data is
+ *       written.
+ */
+void framebuffer_write_row_part(u32 x, u32 y, const u32* pixels, u32 pixel_count);
+
+/**
  * Draws a single pixel.
  *
  * The origin (0, 0) is the top-left corner: x grows to the right and

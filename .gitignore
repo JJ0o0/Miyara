@@ -17,6 +17,7 @@ dist/
 # Editor
 .vscode/
 .idea/
+.clangd
 compile_commands.json
 
 # OS files

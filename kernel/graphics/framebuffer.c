@@ -1,13 +1,12 @@
 #include <graphics/framebuffer.h>
 
+#include <memory/memory.h>
 #include <memory/paging.h>
 #include <memory/pmm.h>
 
 #include <math/math.h>
 
 static Framebuffer framebuffer;
-
-static u32 framebuffer_encode_color(Color color);
 
 bool framebuffer_init(MBIHeader *mbi) {
     TagHeader* current_tag = (TagHeader*)((u8*)mbi + 0x8);
@@ -79,6 +78,48 @@ u32 framebuffer_get_height(void) {
     return framebuffer.height;
 }
 
+u32 framebuffer_encode_color(Color color) {
+    u32 red = (u32)color.r << framebuffer.rgb.red_field_position;
+    u32 green = (u32)color.g << framebuffer.rgb.green_field_position;
+    u32 blue = (u32)color.b << framebuffer.rgb.blue_field_position;
+
+    return red | green | blue;
+}
+
+void framebuffer_write_row(u32 y, const u32* pixels, u32 pixel_count) {
+    if (y >= framebuffer.height || pixels == NULL) {
+        return;
+    }
+
+    if (pixel_count > framebuffer.width) {
+        pixel_count = framebuffer.width;
+    }
+
+    u64 line_address = framebuffer.virtual_address + ((u64)y * framebuffer.pitch);
+    
+    u32* dest = (u32*)line_address;
+    for (u32 x = 0; x < pixel_count; x++) {
+        dest[x] = pixels[x];
+    }
+}
+
+void framebuffer_write_row_part(u32 x, u32 y, const u32* pixels, u32 pixel_count) {
+    if (x >= framebuffer.width || y >= framebuffer.height || pixels == NULL) {
+        return;
+    }
+
+    if (pixel_count > framebuffer.width - x) {
+        pixel_count = framebuffer.width - x;
+    }
+
+    u64 line_address = framebuffer.virtual_address + ((u64)y * framebuffer.pitch) + ((u64)x * sizeof(u32));
+
+    u32* dest = (u32*)line_address;
+    for (u32 i = 0; i < pixel_count; i++) {
+        dest[i] = pixels[i];
+    }
+}
+
 void framebuffer_put_pixel(u32 x, u32 y, Color color) {
     if (x >= framebuffer.width || y >= framebuffer.height) {
         return;
@@ -106,12 +147,4 @@ void framebuffer_fill_rect(u32 x, u32 y, u32 width, u32 height, Color color) {
             framebuffer_put_pixel(px, py, color);
         }
     }
-}
-
-static u32 framebuffer_encode_color(Color color) {
-    u32 red = (u32)color.r << framebuffer.rgb.red_field_position;
-    u32 green = (u32)color.g << framebuffer.rgb.green_field_position;
-    u32 blue = (u32)color.b << framebuffer.rgb.blue_field_position;
-
-    return red | green | blue;
 }

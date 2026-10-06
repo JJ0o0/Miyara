@@ -1,6 +1,7 @@
 #include <multiboot/multiboot.h>
 
 #include <graphics/framebuffer.h>
+#include <graphics/renderer.h>
 #include <graphics/cursor.h>
 
 #include <terminal/terminal.h>
@@ -52,6 +53,13 @@ void kernel_main(u64 multiboot_info_address) {
         heap_init();
     log(LOG_SUCCESS, "Initialized Heap.");
 
+    log(LOG_INFO, "Initializing Renderer...");
+        if (!renderer_init()) {
+            log(LOG_ERROR, "Error while initializing Renderer!");
+            while (1) { }
+        }
+    log(LOG_SUCCESS, "Initialized Renderer.");
+
     log(LOG_INFO, "Initializing PIC...");
         pic_init();
     log(LOG_SUCCESS, "Initialized PIC.");
@@ -80,9 +88,11 @@ void kernel_main(u64 multiboot_info_address) {
         enable_interrupts();
     log(LOG_SUCCESS, "Enabled Interrupts.");
     
+    renderer_clear((Color){30, 60, 120});
+    renderer_present();
+
     log(LOG_INFO, "Initializing Cursor...");
         cursor_init();
-        cursor_draw();
     log(LOG_SUCCESS, "Initialized Cursor.");
 
     term_write(&term, "\nWelcome to Miyara\n");
