@@ -1,0 +1,41 @@
+#include <graphics/font.h>
+#include <graphics/renderer.h>
+
+const u8* font_get_glyph(const BitmapFont* font, char character) {
+    if (font == NULL) {
+        return NULL;
+    }
+
+    u8 index = (u8)character;
+    if (index >= font->glyph_count) {
+        return NULL;
+    }
+
+    u32 bytes_per_glyph = font->glyph_size.y;
+    u32 offset = (u32)index * bytes_per_glyph;
+
+    return font->data + offset;
+}
+
+void font_draw_char(const BitmapFont* font, char character, Vector2u position, Color color) {
+    const u8* glyph = font_get_glyph(font, character);
+    if (glyph == NULL) {
+        return;
+    }
+
+    for (u32 y = 0; y < font->glyph_size.y; y++) {
+        u8 row = glyph[y];
+        for (u32 x = 0; x < font->glyph_size.x; x++) {
+            u8 mask = (u8)(1 << (7 - x));
+            if (row & mask) {
+                renderer_put_pixel(
+                    (Vector2u){
+                        position.x + x,
+                        position.y + y
+                    },
+                    color
+                );
+            }
+        }
+    }
+}

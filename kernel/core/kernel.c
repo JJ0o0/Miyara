@@ -3,6 +3,8 @@
 #include <graphics/framebuffer.h>
 #include <graphics/renderer.h>
 #include <graphics/cursor.h>
+#include <graphics/font_builtin.h>
+#include <graphics/font.h>
 
 #include <terminal/terminal.h>
 
@@ -89,6 +91,12 @@ void kernel_main(u64 multiboot_info_address) {
     log(LOG_SUCCESS, "Enabled Interrupts.");
     
     renderer_clear((Color){30, 60, 120});
+        font_draw_char(
+            &test_font,
+            'A',
+            (Vector2u){100, 100},
+            (Color){255, 255, 255}
+        );
     renderer_present();
 
     log(LOG_INFO, "Initializing Cursor...");
