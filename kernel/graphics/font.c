@@ -26,7 +26,7 @@ void font_draw_char(const BitmapFont* font, char character, Vector2u position, C
     for (u32 y = 0; y < font->glyph_size.y; y++) {
         u8 row = glyph[y];
         for (u32 x = 0; x < font->glyph_size.x; x++) {
-            u8 mask = (u8)(1 << (7 - x));
+            u8 mask = (u8)(1 << x);
             if (row & mask) {
                 renderer_put_pixel(
                     (Vector2u){
@@ -37,5 +37,17 @@ void font_draw_char(const BitmapFont* font, char character, Vector2u position, C
                 );
             }
         }
+    }
+}
+
+void font_draw_string(const BitmapFont* font, const char* text, Vector2u position, Color color) {
+    if (font == NULL || text == NULL) {
+        return;
+    }
+    
+    Vector2u current = position;
+    for (size_t i = 0; text[i] != '\0'; i++) {
+        font_draw_char(font, text[i], current, color);
+        current.x += font->glyph_size.x;
     }
 }

@@ -3,6 +3,6 @@
 
 #include <graphics/font.h>
 
-extern const BitmapFont test_font;
+extern const BitmapFont font8x8_basic_font;
 
 #endif

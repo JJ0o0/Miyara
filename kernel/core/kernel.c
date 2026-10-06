@@ -91,11 +91,9 @@ void kernel_main(u64 multiboot_info_address) {
     log(LOG_SUCCESS, "Enabled Interrupts.");
     
     renderer_clear((Color){30, 60, 120});
-        font_draw_char(
-            &test_font,
-            'A',
-            (Vector2u){100, 100},
-            (Color){255, 255, 255}
+        font_draw_string(
+            &font8x8_basic_font, "Hello Miyara", 
+            (Vector2u){100, 100}, (Color){255, 255, 255}
         );
     renderer_present();
 
