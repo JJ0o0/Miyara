@@ -8,7 +8,11 @@ static u32 head = 0;
 static u32 tail = 0;
 static u32 count = 0;
 
-void add_event(Event event) {
+void add_event(const Event* event) {
+    if (event == NULL) {
+        return;
+    }
+
     if (count == EVENT_QUEUE_SIZE) {
         return;
     }
@@ -17,7 +21,7 @@ void add_event(Event event) {
         head = 0;
     }
 
-    queue[head] = event;
+    queue[head] = *event;
     head++;
     count++;
 }

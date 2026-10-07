@@ -5,8 +5,6 @@
 #include <timer/timer.h>
 #include <mouse/mouse.h>
 
-#include <log/log.h>
-
 void irq_dispatch(u64 irq) {
     switch (irq) {
         // TIMER

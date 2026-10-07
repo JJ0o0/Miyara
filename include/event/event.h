@@ -69,7 +69,7 @@ typedef struct {
  *
  * @param event Event to enqueue (copied by value).
  */
-void add_event(Event event);
+void add_event(const Event* event);
 
 /**
  * Pops the oldest event from the event queue, if any.

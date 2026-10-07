@@ -189,7 +189,11 @@ typedef struct {
      * Whether the key was pressed or released.
      */
     KeyState state;
+
+    KeyboardState keyboard_state;
 } KeyEvent;
+
+bool keyboard_init(void);
 
 /**
  * Reads and processes one scancode from the keyboard controller.

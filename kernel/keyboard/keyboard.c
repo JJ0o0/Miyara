@@ -5,6 +5,9 @@
 #include <event/event.h>
 #include <io/ps2.h>
 
+#define KEYBOARD_CMD_ENABLE_SCANNING 0xF4
+#define KEYBOARD_RESPONSE_ACK        0xFA
+
 static const KeyCode keymap[256] = {
     [0x1E] = KEY_A,
     [0x30] = KEY_B,
@@ -135,6 +138,19 @@ static bool keyboard_parse_scancode(u8 scancode, KeyEvent* event);
 static bool keyboard_parse_e1(u8 scancode, KeyEvent* event);
 static bool keyboard_parse_print_screen(u8 scancode, KeyEvent* event);
 
+bool keyboard_init(void) {
+    if (!ps2_write_first_port(KEYBOARD_CMD_ENABLE_SCANNING)) {
+        return false;
+    }
+
+    u8 response;
+    if (!ps2_read_data(&response)) {
+        return false;
+    }
+
+    return response == KEYBOARD_RESPONSE_ACK;
+}
+
 void keyboard_handle(void) {
     u8 scancode = ps2_read_data_now();
 
@@ -144,10 +160,14 @@ void keyboard_handle(void) {
     }
 
     keyboard_state_update(&keyboard_state, event);
-    add_event((Event){
+    event.keyboard_state = keyboard_state;
+
+    Event system_event = {
         .type = EVENT_KEYBOARD,
         .data.keyboard = event
-    });
+    };
+
+    add_event(&system_event);
 }
 
 static void keyboard_state_update(KeyboardState* state, KeyEvent event) {

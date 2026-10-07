@@ -109,6 +109,8 @@ bool ps2_read_data(u8* data);
  */
 u8 ps2_read_data_now(void);
 
+bool ps2_data_from_second_port(void);
+
 /**
  * Checks whether the controller has a byte waiting to be read.
  *

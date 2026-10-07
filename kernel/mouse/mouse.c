@@ -42,7 +42,7 @@ void mouse_handle(void) {
     if (packet_index == 0 && !(data & MOUSE_PACKET_ALWAYS_ONE)) {
         return;
     }
-
+    
     packet[packet_index] = data;
     packet_index++;
 
@@ -70,10 +70,12 @@ void mouse_handle(void) {
         event.dy -= MOUSE_PACKET_SIGN_OFFSET;
     }
 
-    add_event((Event){
+    Event system_event = {
         .type = EVENT_MOUSE,
         .data.mouse = event
-    });
+    };
+    
+    add_event(&system_event);
 
     packet_index = 0;
 }

@@ -3,6 +3,7 @@
 
 #define PS2_IO_DATA                  0x60
 #define PS2_IO_STATUS                0x64
+#define PS2_STATUS_SECOND_PORT       0x20
 
 #define PS2_STATUS_OUTPUT_FULL       0x01
 #define PS2_STATUS_INPUT_FULL        0x02
@@ -119,6 +120,7 @@ void ps2_init(void) {
     }
 
     config |= PS2_CONFIG_FIRST_PORT_INTERRUPT;
+    config |= PS2_CONFIG_FIRST_PORT_TRANSLATION;
 
     if (has_second_port) {
         config |= PS2_CONFIG_SECOND_PORT_INTERRUPT;
@@ -180,6 +182,10 @@ bool ps2_read_data(u8* data) {
 
 u8 ps2_read_data_now(void) {
     return io_in8(PS2_IO_DATA);
+}
+
+bool ps2_data_from_second_port(void) {
+    return (io_in8(PS2_IO_STATUS) & PS2_STATUS_SECOND_PORT) != 0;
 }
 
 bool ps2_data_available(void) {

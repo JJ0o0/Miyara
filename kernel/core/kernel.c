@@ -26,6 +26,7 @@
 
 #include <event/event.h>
 #include <mouse/mouse.h>
+#include <keyboard/keymap.h>
 #include <io/ps2.h>
 #include <io/io.h>
 
@@ -83,6 +84,13 @@ void kernel_main(u64 multiboot_info_address) {
         ps2_init();
     log(LOG_SUCCESS, "Initialized PS/2 ports.");
 
+    log(LOG_INFO, "Initializing Keyboard...");
+        if (!keyboard_init()) {
+            log(LOG_ERROR, "Error while initializing Keyboard!");
+            while (1) { }
+        }
+    log(LOG_SUCCESS, "Initialized Keyboard.");
+
     log(LOG_INFO, "Initializing Mouse...");
         mouse_init();
     log(LOG_SUCCESS, "Initialized Mouse.");
@@ -90,25 +98,23 @@ void kernel_main(u64 multiboot_info_address) {
     log(LOG_INFO, "Enabling Interrupts...");
         enable_interrupts();
     log(LOG_SUCCESS, "Enabled Interrupts.");
-    
+
     renderer_clear((Color){23, 23, 23});
         GraphicTerminal graphic_terminal;
         GraphicTerminalConfig graphic_terminal_config = {
-            .origin = { (renderer_get_width() - 600) / 2, (renderer_get_height() - 400) / 2 },
-            .size = { 600, 400 },
+            .origin = {
+                (renderer_get_width() - 600) / 2,
+                (renderer_get_height() - 400) / 2
+            },
+            .size = {600, 400},
             .font = &font8x8_basic_font,
             .scale = 2,
-            .foreground = { 255, 255, 255 },
-            .background = { 13, 13, 13 }
+            .foreground = {255, 255, 255},
+            .background = {13, 13, 13}
         };
 
         graphic_terminal_init(&graphic_terminal, &graphic_terminal_config);
         graphic_terminal_clear(&graphic_terminal);
-        graphic_terminal_write(&graphic_terminal, 
-            "Miyara v0.1b0\n\n"
-            "Learning [x]\n"
-            "Testing [x]\n"
-        );
     renderer_present();
 
     log(LOG_INFO, "Initializing Cursor...");
@@ -119,6 +125,7 @@ void kernel_main(u64 multiboot_info_address) {
 
     while (1) {
         Event event;
+
         if (!get_event(&event)) {
             continue;
         }
@@ -127,8 +134,15 @@ void kernel_main(u64 multiboot_info_address) {
             case EVENT_MOUSE:
                 cursor_handle_mouse(event.data.mouse);
                 break;
-            case EVENT_KEYBOARD:
+            case EVENT_KEYBOARD: {
+                char character;
+                if (keymap_translate(event.data.keyboard, &character)) {
+                    graphic_terminal_putchar(&graphic_terminal, character);
+                    renderer_present_rect(graphic_terminal.origin, graphic_terminal.size);
+                }
+
                 break;
+            }
         }
     }
 }
