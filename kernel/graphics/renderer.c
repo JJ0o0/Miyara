@@ -116,6 +116,51 @@ void renderer_write_rect(Vector2u position, Size2u size, const u32* pixels) {
     }
 }
 
+void renderer_copy_rect(Vector2u src_position, Vector2u dest_position, Size2u size) {
+    if (src_position.x >= renderer_width || src_position.y >= renderer_height) {
+        return;
+    }
+
+    if (dest_position.x >= renderer_width || dest_position.y >= renderer_height) {
+        return;
+    }
+
+    if (size.x > renderer_width - src_position.x) {
+        size.x = renderer_width - src_position.x;
+    }
+
+    if (size.x > renderer_width - dest_position.x) {
+        size.x = renderer_width - dest_position.x;
+    }
+
+    if (size.y > renderer_height - src_position.y) {
+        size.y = renderer_height - src_position.y;
+    }
+
+    if (size.y > renderer_height - dest_position.y) {
+        size.y = renderer_height - dest_position.y;
+    }
+
+    if (dest_position.y <= src_position.y) {
+        for (u32 py = 0; py < size.y; py++) {
+            for (u32 px = 0; px < size.x; px++) {
+                u64 src_index = (u64)(src_position.y + py) * renderer_width + (src_position.x + px);
+                u64 dest_index = (u64)(dest_position.y + py) * renderer_width + (dest_position.x + px);
+                backbuffer[dest_index] = backbuffer[src_index];
+            }
+        }
+    } else {
+        for (u32 py = size.y; py > 0; py--) {
+            u32 y = py - 1;
+            for (u32 px = 0; px < size.x; px++) {
+                u64 src_index = (u64)(src_position.y + y) * renderer_width + (src_position.x + px);
+                u64 dest_index = (u64)(dest_position.y + y) * renderer_width + (dest_position.x + px);
+                backbuffer[dest_index] = backbuffer[src_index];
+            }
+        }
+    }
+}
+
 void renderer_present(void) {
     for (u32 y = 0; y < renderer_height; y++) {
         u64 row_index = (u64)y * renderer_width;

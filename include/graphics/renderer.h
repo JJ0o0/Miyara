@@ -109,6 +109,8 @@ void renderer_read_rect(Vector2u position, Size2u size, u32* pixels);
  */
 void renderer_write_rect(Vector2u position, Size2u size, const u32* pixels);
 
+void renderer_copy_rect(Vector2u src_position, Vector2u dest_position, Size2u size);
+
 /**
  * Presents the entire renderer backbuffer to the framebuffer.
  *

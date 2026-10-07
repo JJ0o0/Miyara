@@ -42,4 +42,11 @@ typedef struct {
  */
 typedef Vector2u Size2u;
 
+static inline Vector2u vector2u_add(Vector2u a, Vector2u b) {
+    return (Vector2u){
+        a.x + b.x,
+        a.y + b.y
+    };
+}
+
 #endif

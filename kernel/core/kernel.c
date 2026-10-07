@@ -3,6 +3,7 @@
 #include <graphics/framebuffer.h>
 #include <graphics/renderer.h>
 #include <graphics/cursor.h>
+#include <graphics/graphic_terminal.h>
 #include <graphics/font_builtin.h>
 #include <graphics/font.h>
 
@@ -91,10 +92,22 @@ void kernel_main(u64 multiboot_info_address) {
     log(LOG_SUCCESS, "Enabled Interrupts.");
     
     renderer_clear((Color){23, 23, 23});
-        font_draw_string(
-            &font8x8_basic_font, "Miyara\nScale 2", 
-            (Vector2u){100, 100}, 2,
-            (Color){255, 255, 255}
+        GraphicTerminal graphic_terminal;
+        GraphicTerminalConfig graphic_terminal_config = {
+            .origin = { (renderer_get_width() - 600) / 2, (renderer_get_height() - 400) / 2 },
+            .size = { 600, 400 },
+            .font = &font8x8_basic_font,
+            .scale = 2,
+            .foreground = { 255, 255, 255 },
+            .background = { 13, 13, 13 }
+        };
+
+        graphic_terminal_init(&graphic_terminal, &graphic_terminal_config);
+        graphic_terminal_clear(&graphic_terminal);
+        graphic_terminal_write(&graphic_terminal, 
+            "Miyara v0.1b0\n\n"
+            "Learning [x]\n"
+            "Testing [x]\n"
         );
     renderer_present();
 
