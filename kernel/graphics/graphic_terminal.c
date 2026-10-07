@@ -60,6 +60,21 @@ void graphic_terminal_write(GraphicTerminal* terminal, const char* text) {
     }
 }
 
+void graphic_terminal_backspace(GraphicTerminal* terminal) {
+    if (terminal == NULL || terminal->font == NULL) {
+        return;
+    }
+
+    u32 char_width = terminal->font->glyph_size.x * terminal->scale;
+    u32 char_height = terminal->font->glyph_size.y * terminal->scale;
+    if (terminal->cursor.x > 0) {
+        terminal->cursor.x -= char_width;
+
+        Vector2u position = vector2u_add(terminal->origin, terminal->cursor);
+        renderer_fill_rect(position, (Size2u){char_width, char_height}, terminal->background);
+    }
+}
+
 void graphic_terminal_clear(GraphicTerminal* terminal) {
     if (terminal == NULL) {
         return;

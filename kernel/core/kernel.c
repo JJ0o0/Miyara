@@ -8,6 +8,7 @@
 #include <graphics/font.h>
 
 #include <terminal/terminal.h>
+#include <shell/shell.h>
 
 #include <interrupt/idt.h>
 #include <interrupt/pic.h>
@@ -115,6 +116,9 @@ void kernel_main(u64 multiboot_info_address) {
 
         graphic_terminal_init(&graphic_terminal, &graphic_terminal_config);
         graphic_terminal_clear(&graphic_terminal);
+
+        Shell shell;
+        shell_init(&shell, &graphic_terminal);
     renderer_present();
 
     log(LOG_INFO, "Initializing Cursor...");
@@ -135,12 +139,8 @@ void kernel_main(u64 multiboot_info_address) {
                 cursor_handle_mouse(event.data.mouse);
                 break;
             case EVENT_KEYBOARD: {
-                char character;
-                if (keymap_translate(event.data.keyboard, &character)) {
-                    graphic_terminal_putchar(&graphic_terminal, character);
-                    renderer_present_rect(graphic_terminal.origin, graphic_terminal.size);
-                }
-
+                shell_handle_key(&shell, event.data.keyboard);
+                renderer_present_rect(graphic_terminal.origin, graphic_terminal.size);
                 break;
             }
         }

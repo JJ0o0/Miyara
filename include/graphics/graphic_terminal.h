@@ -33,6 +33,7 @@ typedef struct {
 void graphic_terminal_init(GraphicTerminal* terminal, const GraphicTerminalConfig* config);
 void graphic_terminal_putchar(GraphicTerminal* terminal, char character);
 void graphic_terminal_write(GraphicTerminal* terminal, const char* text);
+void graphic_terminal_backspace(GraphicTerminal* terminal);
 void graphic_terminal_clear(GraphicTerminal* terminal);
 
 #endif
