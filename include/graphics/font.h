@@ -12,7 +12,7 @@ typedef struct {
 } BitmapFont;
 
 const u8* font_get_glyph(const BitmapFont* font, char character);
-void font_draw_char(const BitmapFont* font, char character, Vector2u position, Color color);
-void font_draw_string(const BitmapFont* font, const char* text, Vector2u position, Color color);
+void font_draw_char(const BitmapFont* font, char character, Vector2u position, u8 scale, Color color);
+void font_draw_string(const BitmapFont* font, const char* text, Vector2u position, u8 scale, Color color);
 
 #endif

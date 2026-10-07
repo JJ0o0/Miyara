@@ -17,7 +17,11 @@ const u8* font_get_glyph(const BitmapFont* font, char character) {
     return font->data + offset;
 }
 
-void font_draw_char(const BitmapFont* font, char character, Vector2u position, Color color) {
+void font_draw_char(const BitmapFont* font, char character, Vector2u position, u8 scale, Color color) {
+    if (scale == 0) {
+        return;
+    }
+    
     const u8* glyph = font_get_glyph(font, character);
     if (glyph == NULL) {
         return;
@@ -28,10 +32,14 @@ void font_draw_char(const BitmapFont* font, char character, Vector2u position, C
         for (u32 x = 0; x < font->glyph_size.x; x++) {
             u8 mask = (u8)(1 << x);
             if (row & mask) {
-                renderer_put_pixel(
+                renderer_fill_rect(
                     (Vector2u){
-                        position.x + x,
-                        position.y + y
+                        position.x + (x * scale),
+                        position.y + (y * scale)
+                    },
+                    (Size2u) {
+                        scale,
+                        scale
                     },
                     color
                 );
@@ -40,7 +48,7 @@ void font_draw_char(const BitmapFont* font, char character, Vector2u position, C
     }
 }
 
-void font_draw_string(const BitmapFont* font, const char* text, Vector2u position, Color color) {
+void font_draw_string(const BitmapFont* font, const char* text, Vector2u position, u8 scale, Color color) {
     if (font == NULL || text == NULL) {
         return;
     }
@@ -49,11 +57,11 @@ void font_draw_string(const BitmapFont* font, const char* text, Vector2u positio
     for (size_t i = 0; text[i] != '\0'; i++) {
         if (text[i] == '\n') {
             current.x = position.x;
-            current.y += font->glyph_size.y;
+            current.y += font->glyph_size.y * scale;
             continue;
         }
 
-        font_draw_char(font, text[i], current, color);
-        current.x += font->glyph_size.x;
+        font_draw_char(font, text[i], current, scale, color);
+        current.x += font->glyph_size.x * scale;
     }
 }

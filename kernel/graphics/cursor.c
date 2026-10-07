@@ -9,7 +9,7 @@
 static Vector2i cursor_position;
 
 static const Size2u cursor_size = { CURSOR_WIDTH, CURSOR_HEIGHT };
-static const Color cursor_color = { 93, 84, 77 };
+static const Color cursor_color = { 255, 250, 160 };
 
 static u32 cursor_background[CURSOR_WIDTH * CURSOR_HEIGHT];
 
