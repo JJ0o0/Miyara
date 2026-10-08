@@ -109,6 +109,27 @@ void renderer_read_rect(Vector2u position, Size2u size, u32* pixels);
  */
 void renderer_write_rect(Vector2u position, Size2u size, const u32* pixels);
 
+/**
+ * Copies a rectangular region of the renderer backbuffer to another
+ * position in the same backbuffer.
+ *
+ * The region is clipped so that both the source and the destination
+ * rectangles stay inside the renderer. The two rectangles may overlap
+ * vertically, which is what scrolling needs: rows are copied in the
+ * order that keeps the pixels not yet copied intact.
+ *
+ * @param src_position  Top-left position of the region to copy.
+ * @param dest_position Top-left position the region is copied to.
+ * @param size          Dimensions of the region.
+ *
+ * @note If either position is outside the renderer, nothing is copied.
+ * @note Moving a region to the right within the same rows
+ *       (dest_position.y == src_position.y and
+ *       dest_position.x > src_position.x) with overlapping rectangles
+ *       is not supported: pixels are overwritten before they are read.
+ *       Moving left on the same rows, and any vertical move, are fine.
+ * @note This operation modifies only the backbuffer.
+ */
 void renderer_copy_rect(Vector2u src_position, Vector2u dest_position, Size2u size);
 
 /**

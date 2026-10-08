@@ -67,7 +67,9 @@ typedef struct {
  * queue, but not to call this from regular code with interrupts
  * enabled.
  *
- * @param event Event to enqueue (copied by value).
+ * @param event Event to enqueue. Its contents are copied into the
+ *              queue, so it can be a local variable. Does nothing if
+ *              NULL.
  */
 void add_event(const Event* event);
 

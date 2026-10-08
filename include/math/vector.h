@@ -42,6 +42,19 @@ typedef struct {
  */
 typedef Vector2u Size2u;
 
+/**
+ * Adds two unsigned vectors component by component.
+ *
+ * Typical use is offsetting a position, for example the origin of a
+ * region plus a position inside it.
+ *
+ * @param a First vector.
+ * @param b Second vector.
+ * @return Vector whose x is a.x + b.x and whose y is a.y + b.y.
+ *
+ * @note The sum is not checked for overflow: components wrap around
+ *       modulo 2^32.
+ */
 static inline Vector2u vector2u_add(Vector2u a, Vector2u b) {
     return (Vector2u){
         a.x + b.x,

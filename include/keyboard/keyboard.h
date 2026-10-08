@@ -190,9 +190,25 @@ typedef struct {
      */
     KeyState state;
 
+        /**
+     * Modifier and lock state right after this event was applied, so
+     * the press of a modifier already shows it as active.
+     */
     KeyboardState keyboard_state;
 } KeyEvent;
 
+/**
+ * Enables scanning on the keyboard (first port).
+ *
+ * Sends the "enable scanning" command (0xF4) to the keyboard and waits
+ * for its acknowledgment (0xFA) by polling. Requires ps2_init() to
+ * have succeeded. Call it with interrupts disabled, before
+ * enable_interrupts(): otherwise the IRQ 1 handler would consume the
+ * reply byte.
+ *
+ * @return true if the keyboard acknowledged the command, false on
+ *         timeout or any other response.
+ */
 bool keyboard_init(void);
 
 /**

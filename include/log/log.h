@@ -10,11 +10,35 @@
  * Printed as a tag ("[INFO]", "[ERROR]", etc.) before the message.
  */
 typedef enum {
+    /**
+     * General information, such as the start of a boot step ("[INFO]").
+     */
     LOG_INFO,
+
+    /**
+     * A step finished successfully ("[SUCCESS]").
+     */
     LOG_SUCCESS,
+
+    /**
+     * Something unexpected that does not stop execution ("[WARNING]").
+     */
     LOG_WARNING,
+
+    /**
+     * An operation failed ("[ERROR]").
+     */
     LOG_ERROR,
+
+    /**
+     * Diagnostic detail, such as values for debugging ("[DEBUG]").
+     */
     LOG_DEBUG,
+
+    /**
+     * Unrecoverable failure ("[PANIC]"). It only labels the message:
+     * logging it does not halt the kernel.
+     */
     LOG_PANIC
 } LogType;
 

@@ -109,6 +109,24 @@ bool ps2_read_data(u8* data);
  */
 u8 ps2_read_data_now(void);
 
+/**
+ * Checks whether the byte waiting in the output buffer came from the
+ * second port (the mouse) instead of the first.
+ *
+ * Reads only the status register, without waiting and without
+ * consuming the byte. The status bit it tests is not cleared when
+ * the buffer is emptied, so on its own it does not tell whether a
+ * byte is pending: call ps2_data_available() first, and only trust
+ * this result while that returns true.
+ *
+ * Useful when keyboard and mouse bytes share the single output
+ * buffer, for example when polling. Inside an IRQ handler it is not
+ * needed, since IRQ 1 already means the first port and IRQ 12 the
+ * second.
+ *
+ * @return true if the status register flags the current output byte
+ *         as coming from the second port, false otherwise.
+ */
 bool ps2_data_from_second_port(void);
 
 /**
