@@ -12,6 +12,8 @@
  */
 #define SHELL_MAXIMUM_INPUT_SIZE 256
 
+#define SHELL_MAXIMUM_ARGUMENTS  16
+
 /**
  * State of a shell: the line being typed and the terminal it talks to.
  */
