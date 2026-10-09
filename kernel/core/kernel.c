@@ -4,7 +4,7 @@
 #include <graphics/renderer.h>
 #include <graphics/cursor.h>
 #include <graphics/graphic_terminal.h>
-#include <graphics/font_builtin.h>
+#include <graphics/fonts.h>
 #include <graphics/font.h>
 
 #include <terminal/terminal.h>
@@ -108,8 +108,9 @@ void kernel_main(u64 multiboot_info_address) {
                 (renderer_get_height() - 400) / 2
             },
             .size = {600, 400},
-            .font = &font8x8_basic_font,
-            .scale = 2,
+            .font = &terminus_8x16_font,
+            .scale = 1,
+            .line_spacing = 2,
             .foreground = {255, 255, 255},
             .background = {13, 13, 13}
         };

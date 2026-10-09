@@ -5,12 +5,17 @@
 #include <types/types.h>
 #include <math/vector.h>
 
+typedef enum {
+    FONT_BIT_ORDER_LSB_FIRST,
+    FONT_BIT_ORDER_MSB_FIRST
+} FontBitOrder;
+
 /**
  * A monochrome bitmap font.
  *
  * Each glyph is stored as glyph_size.y consecutive bytes, one byte per
- * row, so glyphs can be at most 8 pixels wide. Within a row, bit 0 is
- * the leftmost pixel. Glyphs are indexed by character code.
+ * row, so glyphs can be at most 8 pixels wide. The bit order within each
+ * row is defined by bit_order. Glyphs are indexed by character code.
  */
 typedef struct {
     /**
@@ -28,6 +33,11 @@ typedef struct {
      * glyph_count - 1.
      */
     u32 glyph_count;
+
+    /**
+     * Bit ordering used within each glyph row.
+     */
+    FontBitOrder bit_order;
 } BitmapFont;
 
 /**

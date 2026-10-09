@@ -30,7 +30,13 @@ void font_draw_char(const BitmapFont* font, char character, Vector2u position, u
     for (u32 y = 0; y < font->glyph_size.y; y++) {
         u8 row = glyph[y];
         for (u32 x = 0; x < font->glyph_size.x; x++) {
-            u8 mask = (u8)(1 << x);
+            u8 mask;
+            if (font->bit_order == FONT_BIT_ORDER_MSB_FIRST) {
+                mask = (u8)(1 << (7 - x));
+            } else {
+                mask = (u8)(1 << x);
+            }
+
             if (row & mask) {
                 renderer_fill_rect(
                     (Vector2u){

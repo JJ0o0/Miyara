@@ -12,6 +12,7 @@ void graphic_terminal_init(GraphicTerminal* terminal, const GraphicTerminalConfi
     terminal->size = config->size;
     terminal->font = config->font;
     terminal->scale = config->scale == 0 ? 1 : config->scale;
+    terminal->line_spacing = config->line_spacing;
     terminal->foreground = config->foreground;
     terminal->background = config->background;
     terminal->cursor = (Vector2u){0, 0};
@@ -24,10 +25,11 @@ void graphic_terminal_putchar(GraphicTerminal* terminal, char character) {
 
     u32 char_width = terminal->font->glyph_size.x * terminal->scale;
     u32 char_height = terminal->font->glyph_size.y * terminal->scale;
+    u32 line_height = char_height + terminal->line_spacing;
 
     if (character == '\n') {
         terminal->cursor.x = 0;
-        terminal->cursor.y += char_height;
+        terminal->cursor.y += line_height;
 
         if (terminal->cursor.y + char_height > terminal->size.y) {
             graphic_terminal_scroll(terminal);
@@ -38,7 +40,7 @@ void graphic_terminal_putchar(GraphicTerminal* terminal, char character) {
 
     if (terminal->cursor.x + char_width > terminal->size.x) {
         terminal->cursor.x = 0;
-        terminal->cursor.y += char_height;
+        terminal->cursor.y += line_height;
 
         if (terminal->cursor.y + char_height > terminal->size.y) {
             graphic_terminal_scroll(terminal);
@@ -67,7 +69,7 @@ void graphic_terminal_backspace(GraphicTerminal* terminal) {
 
     u32 char_width = terminal->font->glyph_size.x * terminal->scale;
     u32 char_height = terminal->font->glyph_size.y * terminal->scale;
-    if (terminal->cursor.x > 0) {
+    if (terminal->cursor.x >= char_width) {
         terminal->cursor.x -= char_width;
 
         Vector2u position = vector2u_add(terminal->origin, terminal->cursor);
@@ -85,7 +87,8 @@ void graphic_terminal_clear(GraphicTerminal* terminal) {
 }
 
 static void graphic_terminal_scroll(GraphicTerminal* terminal) {
-    u32 line_height = terminal->font->glyph_size.y * terminal->scale;
+    u32 char_height = terminal->font->glyph_size.y * terminal->scale;
+    u32 line_height = char_height + terminal->line_spacing;
     if (line_height == 0 || line_height > terminal->size.y) {
         return;
     }

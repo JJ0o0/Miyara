@@ -1,6 +1,7 @@
 # Build artifacts
 build/
 dist/
+kernel/graphics/fonts/generated/
 
 # Objects
 *.o

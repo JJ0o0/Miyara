@@ -40,6 +40,8 @@ typedef struct {
      */
     u8 scale;
 
+    u8 line_spacing;
+
     /**
      * Color of the text.
      */
@@ -76,6 +78,8 @@ typedef struct {
      * Integer scale applied to the font. 0 is treated as 1.
      */
     u8 scale;
+
+    u8 line_spacing;
 
     /**
      * Color of the text.
