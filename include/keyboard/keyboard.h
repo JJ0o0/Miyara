@@ -33,6 +33,22 @@ typedef enum {
     KEY_4, KEY_5, KEY_6,
     KEY_7, KEY_8, KEY_9,
 
+    // Symbols / punctuation
+    KEY_MINUS,
+    KEY_EQUALS,
+    KEY_LEFT_BRACKET,
+    KEY_RIGHT_BRACKET,
+    KEY_SEMICOLON,
+    KEY_APOSTROPHE,
+    KEY_COMMA,
+    KEY_ACUTE,
+    KEY_C_CEDILLA,
+    KEY_TILDE,
+    KEY_PERIOD,
+    KEY_SLASH,
+    KEY_BACKSLASH,
+    KEY_GRAVE,
+
     // Numpad
     KEY_NUM_0,
     KEY_NUM_1,

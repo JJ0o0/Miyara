@@ -47,6 +47,20 @@ static const KeyCode keymap[256] = {
     [0x09] = KEY_8,
     [0x0A] = KEY_9,
 
+    [0x29] = KEY_APOSTROPHE,
+    [0x0C] = KEY_MINUS,
+    [0x0D] = KEY_EQUALS,
+    [0x1A] = KEY_ACUTE,
+    [0x1B] = KEY_LEFT_BRACKET,
+    [0x27] = KEY_C_CEDILLA,
+    [0x28] = KEY_TILDE,
+    [0x2B] = KEY_RIGHT_BRACKET,
+    [0x56] = KEY_BACKSLASH,
+    [0x33] = KEY_COMMA,
+    [0x34] = KEY_PERIOD,
+    [0x35] = KEY_SEMICOLON,
+    [0x73] = KEY_SLASH,
+
     [0x52] = KEY_NUM_0,
     [0x4f] = KEY_NUM_1,
     [0x50] = KEY_NUM_2,
@@ -58,7 +72,6 @@ static const KeyCode keymap[256] = {
     [0x48] = KEY_NUM_8,
     [0x49] = KEY_NUM_9,
 
-    [0x35] = KEY_NUM_DIVIDE,
     [0x37] = KEY_NUM_MULTIPLY,
     [0x4A] = KEY_NUM_SUBTRACT,
     [0x4E] = KEY_NUM_ADD,
@@ -99,6 +112,7 @@ static const KeyCode extended_keymap[256] = {
     [0x48] = KEY_UP,
     [0x50] = KEY_DOWN,
 
+    [0x35] = KEY_NUM_DIVIDE,
     [0x1C] = KEY_NUM_ENTER,
 
     [0x1D] = KEY_RCTRL,

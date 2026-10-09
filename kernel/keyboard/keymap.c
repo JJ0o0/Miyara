@@ -7,7 +7,7 @@ static const char numbers[] = {
 
 static const char shifted_numbers[] = {
     ')', '!', '@', '#', '$',
-    '%', '^', '&', '*', '('
+    '%', '\0', '&', '*', '('
 };
 
 bool keymap_translate(KeyEvent event, char* character) {
@@ -30,6 +30,10 @@ bool keymap_translate(KeyEvent event, char* character) {
 
     if (event.key >= KEY_0 && event.key <= KEY_9) {
         u32 index = event.key - KEY_0;
+        if (index == '\0') {
+            return false;
+        }
+
         *character = shifted
                      ? shifted_numbers[index]
                      : numbers[index];
@@ -50,6 +54,39 @@ bool keymap_translate(KeyEvent event, char* character) {
             return true;
         case KEY_TAB:
             *character = '\t';
+            return true;
+        case KEY_APOSTROPHE:
+            *character = shifted ? '"' : '\'';
+            return true;
+        case KEY_MINUS:
+            *character = shifted ? '_' : '-';
+            return true;
+        case KEY_EQUALS:
+            *character = shifted ? '+' : '=';
+            return true;
+        case KEY_LEFT_BRACKET:
+            *character = shifted ? '{' : '[';
+            return true;
+        case KEY_RIGHT_BRACKET:
+            *character = shifted ? '}' : ']';
+            return true;
+        case KEY_TILDE:
+            *character = shifted ? '^' : '~';
+            return true;
+        case KEY_BACKSLASH:
+            *character = shifted ? '|' : '\\';
+            return true;
+        case KEY_COMMA:
+            *character = shifted ? '<' : ',';
+            return true;
+        case KEY_PERIOD:
+            *character = shifted ? '>' : '.';
+            return true;
+        case KEY_SEMICOLON:
+            *character = shifted ? ':' : ';';
+            return true;
+        case KEY_SLASH:
+            *character = shifted ? '?' : '/';
             return true;
         case KEY_ENTER:
         case KEY_NUM_ENTER:
