@@ -30,13 +30,13 @@ bool keymap_translate(KeyEvent event, char* character) {
 
     if (event.key >= KEY_0 && event.key <= KEY_9) {
         u32 index = event.key - KEY_0;
-        if (index == '\0') {
-            return false;
-        }
-
         *character = shifted
                      ? shifted_numbers[index]
                      : numbers[index];
+
+        if (*character == '\0') {
+            return false;
+        }
 
         return true;
     }
@@ -53,8 +53,8 @@ bool keymap_translate(KeyEvent event, char* character) {
             *character = ' ';
             return true;
         case KEY_TAB:
-            *character = '\t';
-            return true;
+            // TODO
+            return false;
         case KEY_APOSTROPHE:
             *character = shifted ? '"' : '\'';
             return true;

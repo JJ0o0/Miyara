@@ -29,4 +29,31 @@ static inline bool string_equals(const char* a, const char* b) {
     return a[i] == '\0' && b[i] == '\0';
 }
 
+static inline void string_copy(const char* src, char* dest) {
+    if (src == NULL || dest == NULL) {
+        return;
+    }
+
+    size_t i = 0;
+    while (src[i] != '\0') {
+        dest[i] = src[i];
+        i++;
+    }
+
+    dest[i] = '\0';
+}
+
+static inline size_t string_len(const char* str) {
+    if (str == NULL) {
+        return 0;
+    }
+
+    size_t len = 0;
+    while (str[len] != '\0') {
+        len++;
+    }
+
+    return len;
+}
+
 #endif

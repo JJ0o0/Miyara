@@ -14,6 +14,10 @@
 
 #define SHELL_MAXIMUM_ARGUMENTS  16
 
+#define SHELL_HISTORY_SIZE       16
+
+#define SHELL_PROMPT_LENGTH      8
+
 /**
  * State of a shell: the line being typed and the terminal it talks to.
  */
@@ -33,6 +37,15 @@ typedef struct {
      * Number of characters in input_buffer, not counting the NUL.
      */
     u32 input_length;
+
+    char history[SHELL_HISTORY_SIZE][SHELL_MAXIMUM_INPUT_SIZE];
+    u32 history_count;
+    u32 history_index;
+
+    char history_draft[SHELL_MAXIMUM_INPUT_SIZE];
+    bool history_browsing;
+
+    u32 cursor_index;
 } Shell;
 
 /**

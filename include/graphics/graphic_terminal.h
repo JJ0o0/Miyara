@@ -6,6 +6,9 @@
 #include <math/vector.h>
 #include <types/types.h>
 
+#define GRAPHIC_TERMINAL_CURSOR_HEIGHT 2
+#define GRAPHIC_TERMINAL_CURSOR_MAX_WIDTH 32
+
 /**
  * A text terminal drawn with a bitmap font inside a rectangle of the
  * renderer.
@@ -29,6 +32,10 @@ typedef struct {
      * Position of the next character, in pixels, relative to origin.
      */
     Vector2u cursor;
+
+    bool cursor_visible;
+    char cursor_saved_pixels[GRAPHIC_TERMINAL_CURSOR_MAX_WIDTH * GRAPHIC_TERMINAL_CURSOR_HEIGHT];
+    u64 cursor_blink_counter;
 
     /**
      * Font used to draw the text.
@@ -154,5 +161,11 @@ void graphic_terminal_backspace(GraphicTerminal* terminal);
  * @param terminal Terminal to clear. Ignored if NULL.
  */
 void graphic_terminal_clear(GraphicTerminal* terminal);
+void graphic_terminal_clear_chars(GraphicTerminal* terminal, u32 count);
+
+void graphic_terminal_draw_cursor(GraphicTerminal* terminal);
+void graphic_terminal_hide_cursor(GraphicTerminal* terminal);
+void graphic_terminal_toggle_cursor(GraphicTerminal* terminal);
+void graphic_terminal_set_cursor_column(GraphicTerminal* terminal, u32 column);
 
 #endif
