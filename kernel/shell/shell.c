@@ -3,6 +3,7 @@
 
 #include <keyboard/keymap.h>
 #include <string/string.h>
+#include <math/math.h>
 
 static void shell_print_prompt(Shell* shell);
 static void shell_submit(Shell* shell);
@@ -14,11 +15,14 @@ static void shell_handle_enter(Shell* shell);
 static void shell_move_cursor(Shell* shell, u32 index);
 static void shell_insert_character(Shell* shell, char character);
 static void shell_redraw_from(Shell* shell, u32 index, u32 clear_count);
+static bool shell_set_terminal_cursor(Shell* shell, u32 index);
 
 static void shell_replace_input(Shell* shell, const char* text);
 static void shell_history_add(Shell* shell);
 static void shell_history_previous(Shell* shell);
 static void shell_history_next(Shell* shell);
+
+static Vector2i shell_get_input_position(Shell* shell, u32 index);
 
 void shell_init(Shell* shell, GraphicTerminal* terminal) {
     if (shell == NULL || terminal == NULL) {
@@ -37,6 +41,7 @@ void shell_init(Shell* shell, GraphicTerminal* terminal) {
     shell->history_browsing = false;
 
     shell->cursor_index = 0;
+    shell->input_scroll_offset = 0;
 
     shell_print_prompt(shell);
 }
@@ -96,6 +101,8 @@ void shell_handle_key(Shell* shell, KeyEvent key_event) {
 
 static void shell_print_prompt(Shell* shell) {
     graphic_terminal_write(shell->terminal, "Miyara> ");
+    shell->input_origin = shell->terminal->cursor;
+    shell->input_scroll_offset = shell->terminal->scroll_offset;
 }
 
 static void shell_submit(Shell* shell) {
@@ -203,6 +210,7 @@ static void shell_handle_enter(Shell* shell) {
     shell->cursor_index = 0;
 
     shell_print_prompt(shell);
+    graphic_terminal_reset_cursor_blink(shell->terminal);
     graphic_terminal_draw_cursor(shell->terminal);
 }
 
@@ -218,9 +226,11 @@ static void shell_move_cursor(Shell* shell, u32 index) {
     graphic_terminal_hide_cursor(shell->terminal);
     
     shell->cursor_index = index;
-    graphic_terminal_set_cursor_column(shell->terminal, SHELL_PROMPT_LENGTH + shell->cursor_index);
-
-    graphic_terminal_draw_cursor(shell->terminal);
+    
+    if (shell_set_terminal_cursor(shell, shell->cursor_index)) {
+        graphic_terminal_reset_cursor_blink(shell->terminal);
+        graphic_terminal_draw_cursor(shell->terminal);
+    }
 }
 
 static void shell_insert_character(Shell* shell, char character) {
@@ -253,11 +263,74 @@ static void shell_redraw_from(Shell* shell, u32 index, u32 clear_count) {
         return;
     }
 
-    graphic_terminal_set_cursor_column(shell->terminal, SHELL_PROMPT_LENGTH + index);
-    graphic_terminal_clear_chars(shell->terminal, clear_count);
-    graphic_terminal_write(shell->terminal, &shell->input_buffer[index]);
-    graphic_terminal_set_cursor_column(shell->terminal, SHELL_PROMPT_LENGTH + shell->cursor_index);
-    graphic_terminal_draw_cursor(shell->terminal);
+    u32 draw_index = index;
+    while (draw_index < shell->input_length) {
+        if (shell_set_terminal_cursor(shell, draw_index)) {
+            break;
+        }
+
+        draw_index++;
+    }
+
+    if (draw_index < shell->input_length) {
+        u32 skipped = draw_index - index;
+        u32 visible_clear_count = 0;
+        if (skipped < clear_count) {
+            visible_clear_count = clear_count - skipped;
+        }
+
+        graphic_terminal_clear_chars(shell->terminal, visible_clear_count);
+        
+        for (u32 i = draw_index; i < shell->input_length; i++) {
+            Vector2i position = shell_get_input_position(shell, i);
+            if (position.x < 0 || position.y < 0) {
+                continue;
+            }
+
+            if (position.y >= (i32)shell->terminal->size.y) {
+                break;
+            }
+
+            graphic_terminal_draw_char_at(
+                shell->terminal, shell->input_buffer[i], 
+                (Vector2u){
+                    (u32)position.x,
+                    (u32)position.y
+                }
+            );
+        }
+    }
+
+    if (shell_set_terminal_cursor(shell, shell->cursor_index)) {
+        graphic_terminal_reset_cursor_blink(shell->terminal);
+        graphic_terminal_draw_cursor(shell->terminal);
+    }
+}
+
+static bool shell_set_terminal_cursor(Shell* shell, u32 index) {
+    if (shell == NULL) {
+        return false;
+    }
+
+    Vector2i position = shell_get_input_position(shell, index);
+    if (position.x < 0 || position.y < 0) {
+        return false;
+    }
+
+    if (position.x >= shell->terminal->size.x) {
+        return false;
+    }
+
+    if (position.y >= shell->terminal->size.y) {
+        return false;
+    }
+
+    shell->terminal->cursor = (Vector2u){
+        (u32)position.x,
+        (u32)position.y
+    };
+
+    return true;
 }
 
 static void shell_replace_input(Shell* shell, const char* text) {
@@ -273,18 +346,41 @@ static void shell_replace_input(Shell* shell, const char* text) {
     graphic_terminal_hide_cursor(shell->terminal);
 
     u32 old_length = shell->input_length;
-    graphic_terminal_set_cursor_column(shell->terminal, SHELL_PROMPT_LENGTH);
+    u32 old_draw_index = 0;
+    while (old_draw_index < old_length) {
+        if (shell_set_terminal_cursor(shell, old_draw_index)) {
+            break;
+        }
 
-    graphic_terminal_clear_chars(shell->terminal, old_length);
+        old_draw_index++;
+    }
+
+    if (old_draw_index < old_length) {
+        graphic_terminal_clear_chars(shell->terminal, old_length - old_draw_index);
+    }
 
     string_copy(text, shell->input_buffer);
 
     shell->input_length = text_length;
     shell->cursor_index = text_length;
 
-    graphic_terminal_write(shell->terminal, shell->input_buffer);
-    graphic_terminal_set_cursor_column(shell->terminal, SHELL_PROMPT_LENGTH + shell->cursor_index);
-    graphic_terminal_draw_cursor(shell->terminal);
+    u32 draw_index = 0;
+    while (draw_index < shell->input_length) {
+        if (shell_set_terminal_cursor(shell, draw_index)) {
+            break;
+        }
+
+        draw_index++;
+    }
+
+    if (draw_index < shell->input_length) {
+        graphic_terminal_write(shell->terminal, &shell->input_buffer[draw_index]);
+    }
+
+    if (shell_set_terminal_cursor(shell, shell->cursor_index)) {
+        graphic_terminal_reset_cursor_blink(shell->terminal);
+        graphic_terminal_draw_cursor(shell->terminal);
+    }
 }
 
 static void shell_history_add(Shell* shell) {
@@ -338,4 +434,38 @@ static void shell_history_next(Shell* shell) {
         shell_replace_input(shell, shell->history_draft);
         shell->history_browsing = false;
     }
+}
+
+static Vector2i shell_get_input_position(Shell* shell, u32 index) {
+    if (shell == NULL) {
+        return (Vector2i){0, 0};
+    }   
+
+    u32 char_width = graphic_terminal_get_char_width(shell->terminal);
+    if (char_width == 0) {
+        return (Vector2i){0, 0};
+    }
+
+    u32 line_height = graphic_terminal_get_line_height(shell->terminal);
+    if (line_height == 0) {
+        return (Vector2i){0, 0};
+    }
+
+    u32 columns = shell->terminal->size.x / char_width;
+    if (columns == 0) {
+        return (Vector2i){0, 0};
+    }
+
+    u32 start_column = shell->input_origin.x / char_width;
+    u32 cell = start_column + index;
+
+    u32 column = cell % columns;
+    u32 row = cell / columns;
+
+    u64 scroll_delta = shell->terminal->scroll_offset - shell->input_scroll_offset;
+    i64 y = (i64)shell->input_origin.y + ((i64)row * (i64)line_height) - (i64)scroll_delta;
+    return (Vector2i){
+        (i32)(column * char_width),
+        (i32)y
+    };
 }

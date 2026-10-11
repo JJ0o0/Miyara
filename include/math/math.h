@@ -56,5 +56,6 @@ u64 align_down(u64 value, u64 alignment);
  * @return value limited to the range [min, max].
  */
 i32 clamp_i32(i32 value, i32 min, i32 max);
+i64 clamp_i64(i64 value, i64 min, i64 max);
 
 #endif

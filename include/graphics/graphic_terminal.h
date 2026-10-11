@@ -85,6 +85,8 @@ typedef struct {
      */
     u8 line_spacing;
 
+    u64 scroll_offset;
+
     /**
      * Color of the text.
      */
@@ -169,6 +171,8 @@ void graphic_terminal_init(GraphicTerminal* terminal, const GraphicTerminalConfi
  * @param character Character to write.
  */
 void graphic_terminal_putchar(GraphicTerminal* terminal, char character);
+
+void graphic_terminal_draw_char_at(GraphicTerminal* terminal, char character, Vector2u position);
 
 /**
  * Writes a string, character by character, with
@@ -271,6 +275,8 @@ void graphic_terminal_present_cursor(GraphicTerminal* terminal);
  */
 bool graphic_terminal_update_cursor(GraphicTerminal* terminal);
 
+void graphic_terminal_reset_cursor_blink(GraphicTerminal* terminal);
+
 /**
  * Moves the terminal cursor horizontally to a character column on the
  * current line.
@@ -286,5 +292,9 @@ bool graphic_terminal_update_cursor(GraphicTerminal* terminal);
  * @param column Character column relative to the terminal origin.
  */
 void graphic_terminal_set_cursor_column(GraphicTerminal* terminal, u32 column);
+
+u32 graphic_terminal_get_char_width(const GraphicTerminal* terminal);
+u32 graphic_terminal_get_char_height(const GraphicTerminal* terminal);
+u32 graphic_terminal_get_line_height(const GraphicTerminal* terminal);
 
 #endif

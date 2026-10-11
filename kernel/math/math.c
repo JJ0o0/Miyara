@@ -31,3 +31,15 @@ i32 clamp_i32(i32 value, i32 min, i32 max) {
 
     return value;
 }
+
+i64 clamp_i64(i64 value, i64 min, i64 max) {
+    if (value < min) {
+        return min;
+    }
+
+    if (value > max) {
+        return max;
+    }
+
+    return value;
+}

@@ -3,6 +3,7 @@
 
 #include <graphics/graphic_terminal.h>
 #include <keyboard/keyboard.h>
+#include <math/vector.h>
 #include <types/types.h>
 
 /**
@@ -51,6 +52,9 @@ typedef struct Shell {
      * Number of characters in input_buffer, not counting the NUL.
      */
     u32 input_length;
+
+    u64 input_scroll_offset;
+    Vector2u input_origin;
 
     /**
      * Previous commands, oldest first. Only the first history_count
