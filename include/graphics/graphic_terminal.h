@@ -6,8 +6,26 @@
 #include <math/vector.h>
 #include <types/types.h>
 
-#define GRAPHIC_TERMINAL_CURSOR_HEIGHT 2
-#define GRAPHIC_TERMINAL_CURSOR_MAX_WIDTH 32
+/**
+ * Height of the visual text cursor, in pixels.
+ *
+ * The cursor is rendered as a horizontal underline at the bottom of
+ * the current character cell.
+ */
+#define GRAPHIC_TERMINAL_CURSOR_HEIGHT      2
+
+/**
+ * Maximum supported cursor width, in pixels.
+ *
+ * Used to size the temporary pixel buffer that stores the contents
+ * underneath the cursor while it is visible.
+ */
+#define GRAPHIC_TERMINAL_CURSOR_MAX_WIDTH   32
+
+/**
+ * Cursor blink interval, in milliseconds.
+ */
+#define GRAPHIC_TERMINAL_CURSOR_BLINK_MS    500
 
 /**
  * A text terminal drawn with a bitmap font inside a rectangle of the
@@ -33,9 +51,24 @@ typedef struct {
      */
     Vector2u cursor;
 
+    /**
+     * Whether the visual cursor is currently drawn.
+     */
     bool cursor_visible;
-    char cursor_saved_pixels[GRAPHIC_TERMINAL_CURSOR_MAX_WIDTH * GRAPHIC_TERMINAL_CURSOR_HEIGHT];
-    u64 cursor_blink_counter;
+
+    /**
+     * Saved renderer pixels underneath the visual cursor.
+     *
+     * The pixels are captured before the cursor is drawn and restored
+     * when the cursor is hidden, preventing the cursor from damaging
+     * glyph pixels underneath it.
+     */
+    u32 cursor_saved_pixels[GRAPHIC_TERMINAL_CURSOR_MAX_WIDTH * GRAPHIC_TERMINAL_CURSOR_HEIGHT];
+
+    /**
+     * Timer tick at which the cursor blink state was last toggled.
+     */
+    u64 cursor_last_blink_tick;
 
     /**
      * Font used to draw the text.
@@ -47,6 +80,9 @@ typedef struct {
      */
     u8 scale;
 
+    /**
+     * Extra vertical spacing, in pixels, added between terminal lines.
+     */
     u8 line_spacing;
 
     /**
@@ -86,6 +122,9 @@ typedef struct {
      */
     u8 scale;
 
+    /**
+     * Extra vertical spacing, in pixels, added between terminal lines.
+     */
     u8 line_spacing;
 
     /**
@@ -161,11 +200,91 @@ void graphic_terminal_backspace(GraphicTerminal* terminal);
  * @param terminal Terminal to clear. Ignored if NULL.
  */
 void graphic_terminal_clear(GraphicTerminal* terminal);
+
+/**
+ * Clears a number of character cells starting at the current cursor
+ * position.
+ *
+ * Each cell is painted with the terminal background color. The cursor
+ * position itself is not changed.
+ *
+ * @param terminal Terminal to clear cells on. Ignored if NULL or
+ *                 without a font.
+ * @param count Number of consecutive character cells to clear.
+ */
 void graphic_terminal_clear_chars(GraphicTerminal* terminal, u32 count);
 
+/**
+ * Draws the visual text cursor at the current terminal cursor position.
+ *
+ * The pixels underneath the cursor are saved before drawing so they
+ * can later be restored by graphic_terminal_hide_cursor().
+ *
+ * Does nothing if the cursor is already visible.
+ *
+ * @param terminal Terminal whose cursor should be drawn. Ignored if
+ *                 NULL or without a font.
+ */
 void graphic_terminal_draw_cursor(GraphicTerminal* terminal);
+
+/**
+ * Hides the visual text cursor.
+ *
+ * Restores the pixels that were saved when the cursor was drawn.
+ *
+ * Does nothing if the cursor is already hidden.
+ *
+ * @param terminal Terminal whose cursor should be hidden. Ignored if
+ *                 NULL or without a font.
+ */
 void graphic_terminal_hide_cursor(GraphicTerminal* terminal);
+
+/**
+ * Toggles the visual cursor between visible and hidden states.
+ *
+ * @param terminal Terminal whose cursor state should be toggled.
+ */
 void graphic_terminal_toggle_cursor(GraphicTerminal* terminal);
+
+/**
+ * Presents only the visual cursor region from the renderer backbuffer
+ * to the framebuffer.
+ *
+ * This avoids presenting the entire terminal when only the blinking
+ * cursor has changed.
+ *
+ * @param terminal Terminal whose cursor region should be presented.
+ */
+void graphic_terminal_present_cursor(GraphicTerminal* terminal);
+
+/**
+ * Updates the cursor blink state according to the system timer.
+ *
+ * When GRAPHIC_TERMINAL_CURSOR_BLINK_MS has elapsed since the previous
+ * toggle, the cursor visibility is changed and the last blink tick is
+ * updated.
+ *
+ * @param terminal Terminal whose cursor blink state should be updated.
+ *
+ * @return true if the cursor visual state changed.
+ * @return false if no redraw is required.
+ */
+bool graphic_terminal_update_cursor(GraphicTerminal* terminal);
+
+/**
+ * Moves the terminal cursor horizontally to a character column on the
+ * current line.
+ *
+ * The supplied column is converted to a pixel position using the
+ * current font width and scale. The vertical cursor position is left
+ * unchanged.
+ *
+ * If the requested column would place the character cell outside the
+ * terminal area, the cursor is clamped to the last valid column.
+ *
+ * @param terminal Terminal whose cursor should be moved.
+ * @param column Character column relative to the terminal origin.
+ */
 void graphic_terminal_set_cursor_column(GraphicTerminal* terminal, u32 column);
 
 #endif

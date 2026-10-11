@@ -1,5 +1,6 @@
 #include <graphics/graphic_terminal.h>
 #include <graphics/renderer.h>
+#include <timer/timer.h>
 
 static void graphic_terminal_scroll(GraphicTerminal* terminal);
 
@@ -17,7 +18,7 @@ void graphic_terminal_init(GraphicTerminal* terminal, const GraphicTerminalConfi
     terminal->background = config->background;
     terminal->cursor = (Vector2u){0, 0};
     terminal->cursor_visible = false;
-    terminal->cursor_blink_counter = 0;
+    terminal->cursor_last_blink_tick = 0;
 }
 
 void graphic_terminal_putchar(GraphicTerminal* terminal, char character) {
@@ -109,12 +110,18 @@ void graphic_terminal_draw_cursor(GraphicTerminal* terminal) {
     }
 
     u32 char_width = terminal->font->glyph_size.x * terminal->scale;
+    if (char_width > GRAPHIC_TERMINAL_CURSOR_MAX_WIDTH) {
+        return;
+    }
+
     u32 char_height = terminal->font->glyph_size.y * terminal->scale;
+    Vector2u cursor_position = {
+        terminal->origin.x + terminal->cursor.x,
+        (terminal->origin.y + terminal->cursor.y) + char_height - GRAPHIC_TERMINAL_CURSOR_HEIGHT
+    };
 
-    u32 cursor_x = terminal->origin.x + terminal->cursor.x;
-    u32 cursor_y = (terminal->origin.y + terminal->cursor.y) + char_height - 2;
-
-    renderer_fill_rect((Vector2u){cursor_x, cursor_y}, (Size2u){char_width, 2}, terminal->foreground);
+    renderer_read_rect(cursor_position, (Size2u){char_width, GRAPHIC_TERMINAL_CURSOR_HEIGHT}, terminal->cursor_saved_pixels);
+    renderer_fill_rect(cursor_position, (Size2u){char_width, GRAPHIC_TERMINAL_CURSOR_HEIGHT}, terminal->foreground);
     terminal->cursor_visible = true;
 }
 
@@ -128,21 +135,81 @@ void graphic_terminal_hide_cursor(GraphicTerminal* terminal) {
     }
 
     u32 char_width = terminal->font->glyph_size.x * terminal->scale;
-    u32 char_height = terminal->font->glyph_size.y * terminal->scale;
+    if (char_width > GRAPHIC_TERMINAL_CURSOR_MAX_WIDTH) {
+        return;
+    }
 
-    u32 cursor_x = terminal->origin.x + terminal->cursor.x;
-    u32 cursor_y = (terminal->origin.y + terminal->cursor.y) + char_height - 2;
-    renderer_fill_rect((Vector2u){cursor_x, cursor_y}, (Size2u){char_width, 2}, terminal->background);
-    
+    u32 char_height = terminal->font->glyph_size.y * terminal->scale;
+    Vector2u cursor_position = {
+        terminal->origin.x + terminal->cursor.x,
+        (terminal->origin.y + terminal->cursor.y) + char_height - GRAPHIC_TERMINAL_CURSOR_HEIGHT
+    };
+
+    if (char_width == 0) {
+        return;
+    }
+
+    renderer_write_rect(cursor_position, (Size2u){char_width, GRAPHIC_TERMINAL_CURSOR_HEIGHT}, terminal->cursor_saved_pixels);
     terminal->cursor_visible = false;
 }
 
 void graphic_terminal_toggle_cursor(GraphicTerminal* terminal) {
+    if (terminal == NULL) {
+        return;
+    }
+
     if (terminal->cursor_visible) {
         graphic_terminal_hide_cursor(terminal);
     } else {
         graphic_terminal_draw_cursor(terminal);
     }
+}
+
+void graphic_terminal_present_cursor(GraphicTerminal* terminal) {
+    if (terminal == NULL || terminal->font == NULL) {
+        return;
+    }
+
+    u32 char_width = terminal->font->glyph_size.x * terminal->scale;
+    if (char_width == 0) {
+        return;
+    }
+
+    if (char_width > GRAPHIC_TERMINAL_CURSOR_MAX_WIDTH) {
+        return;
+    }
+
+    u32 char_height = terminal->font->glyph_size.y * terminal->scale;
+    if (char_height < GRAPHIC_TERMINAL_CURSOR_HEIGHT) {
+        return;
+    }
+
+    Vector2u cursor_position = {
+        terminal->origin.x + terminal->cursor.x,
+        (terminal->origin.y + terminal->cursor.y) + char_height - GRAPHIC_TERMINAL_CURSOR_HEIGHT
+    };
+
+    renderer_present_rect(cursor_position, (Size2u){char_width, GRAPHIC_TERMINAL_CURSOR_HEIGHT});
+}
+
+bool graphic_terminal_update_cursor(GraphicTerminal* terminal) {
+    if (terminal == NULL) {
+        return false;
+    }
+    
+    u64 interval = timer_ticks_from_ms(GRAPHIC_TERMINAL_CURSOR_BLINK_MS);
+    if (interval == 0) {
+        return false;
+    }
+
+    u64 current_tick = timer_get_ticks();
+    if (current_tick - terminal->cursor_last_blink_tick >= interval) {
+        graphic_terminal_toggle_cursor(terminal);
+        terminal->cursor_last_blink_tick = current_tick;
+        return true;
+    }
+
+    return false;
 }
 
 void graphic_terminal_set_cursor_column(GraphicTerminal* terminal, u32 column) {

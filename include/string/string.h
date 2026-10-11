@@ -29,6 +29,19 @@ static inline bool string_equals(const char* a, const char* b) {
     return a[i] == '\0' && b[i] == '\0';
 }
 
+/**
+ * Copies a NUL-terminated string into a destination buffer.
+ *
+ * The terminating NUL byte is copied as well.
+ *
+ * The destination buffer must be large enough to hold the entire
+ * source string including its terminating NUL character.
+ *
+ * @param src Source NUL-terminated string.
+ * @param dest Destination buffer.
+ *
+ * @note Does nothing if src or dest is NULL.
+ */
 static inline void string_copy(const char* src, char* dest) {
     if (src == NULL || dest == NULL) {
         return;
@@ -43,6 +56,17 @@ static inline void string_copy(const char* src, char* dest) {
     dest[i] = '\0';
 }
 
+/**
+ * Returns the length of a NUL-terminated string.
+ *
+ * The terminating NUL character is not included in the returned
+ * length.
+ *
+ * @param str NUL-terminated string.
+ *
+ * @return Number of characters before the terminating NUL.
+ * @return 0 if str is NULL or points to an empty string.
+ */
 static inline size_t string_len(const char* str) {
     if (str == NULL) {
         return 0;

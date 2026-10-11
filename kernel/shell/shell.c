@@ -1,50 +1,16 @@
 #include <shell/shell.h>
+#include <shell/commands.h>
+
 #include <keyboard/keymap.h>
 #include <string/string.h>
 
-typedef void (*ShellCommandHandler)(Shell* shell, int argc, const char** argv);
-
-typedef struct {
-    const char* name;
-    const char* description;
-    ShellCommandHandler handler;
-} ShellCommand;
-
 static void shell_print_prompt(Shell* shell);
-static void shell_execute_command(Shell* shell);
+static void shell_submit(Shell* shell);
 static int  shell_parse_arguments(char* input, const char** argv);
 
 static void shell_history_add(Shell* shell);
 static void shell_history_previous(Shell* shell);
 static void shell_history_next(Shell* shell);
-
-static void shell_command_help(Shell* shell, int argc, const char** argv);
-static void shell_command_clear(Shell* shell, int argc, const char** argv);
-static void shell_command_echo(Shell* shell, int argc, const char** argv);
-static void shell_command_version(Shell* shell, int argc, const char** argv);
-
-static const ShellCommand commands[] = {
-    {
-        .name = "help",
-        .description = "Lists available commands.",
-        .handler = shell_command_help
-    },
-    {
-        .name = "clear",
-        .description = "Clears the terminal.",
-        .handler = shell_command_clear
-    },
-    {
-        .name = "echo",
-        .description = "Prints text on the terminal.",
-        .handler = shell_command_echo
-    },
-    {
-        .name = "version",
-        .description = "Shows the Miyara version.",
-        .handler = shell_command_version
-    },
-};
 
 void shell_init(Shell* shell, GraphicTerminal* terminal) {
     if (shell == NULL || terminal == NULL) {
@@ -107,7 +73,7 @@ void shell_handle_key(Shell* shell, KeyEvent key_event) {
             
             shell->input_buffer[shell->input_length] = '\0';
             shell_history_add(shell);
-            shell_execute_command(shell);
+            shell_submit(shell);
 
             shell->input_buffer[0] = '\0';
             shell->input_length = 0;
@@ -150,6 +116,20 @@ void shell_handle_key(Shell* shell, KeyEvent key_event) {
             graphic_terminal_set_cursor_column(shell->terminal, SHELL_PROMPT_LENGTH + shell->cursor_index);
             graphic_terminal_draw_cursor(shell->terminal);
             return;
+        case KEY_HOME:
+            graphic_terminal_hide_cursor(shell->terminal);
+            shell->cursor_index = 0;
+
+            graphic_terminal_set_cursor_column(shell->terminal, SHELL_PROMPT_LENGTH + shell->cursor_index);
+            graphic_terminal_draw_cursor(shell->terminal);
+            return;
+        case KEY_END:
+            graphic_terminal_hide_cursor(shell->terminal);
+            shell->cursor_index = shell->input_length;
+
+            graphic_terminal_set_cursor_column(shell->terminal, SHELL_PROMPT_LENGTH + shell->cursor_index);
+            graphic_terminal_draw_cursor(shell->terminal);
+            return;
         default:
             break;
     }
@@ -188,28 +168,11 @@ static void shell_print_prompt(Shell* shell) {
     graphic_terminal_write(shell->terminal, "Miyara> ");
 }
 
-static void shell_execute_command(Shell* shell) {
-    if (shell == NULL) {
-        return;
-    }
-
+static void shell_submit(Shell* shell) {
     const char* argv[SHELL_MAXIMUM_ARGUMENTS];
     int argc = shell_parse_arguments(shell->input_buffer, argv);
-    if (argc == 0) {
-        return;
-    }
 
-    size_t commands_count = sizeof(commands) / sizeof(commands[0]);
-    for (size_t i = 0; i < commands_count; i++) {
-        if (!string_equals(argv[0], commands[i].name)) {
-            continue;
-        }
-
-        commands[i].handler(shell, argc, argv);
-        return;
-    }
-
-    graphic_terminal_write(shell->terminal, "Unknown command. Use 'help' to see available commands.\n");
+    shell_execute_command(shell, argc, argv);
 }
 
 static int shell_parse_arguments(char* input, const char** argv) {
@@ -291,7 +254,7 @@ static void shell_history_previous(Shell* shell) {
 }
 
 static void shell_history_next(Shell* shell) {
-    if (shell->history_count == 0) {
+    if (shell->history_count == 0 || !shell->history_browsing) {
         return;
     }
 
@@ -317,76 +280,4 @@ static void shell_history_next(Shell* shell) {
         
         shell->history_browsing = false;
     }
-}
-
-static void shell_command_help(Shell* shell, int argc, const char** argv) {
-    if (argc > 2) {
-        graphic_terminal_write(shell->terminal, "Usage: help [command]\n");
-        return;
-    }
-
-    if (argc == 1) {
-        graphic_terminal_write(shell->terminal, "Available Commands:\n");
-        graphic_terminal_write(shell->terminal, "===================\n");
-    }
-
-    size_t commands_count = sizeof(commands) / sizeof(commands[0]);
-    for (size_t i = 0; i < commands_count; i++) {
-        const ShellCommand* command = &commands[i];
-        if (argc == 2) {
-            if (!string_equals(argv[1], command->name)) {
-                continue;
-            }
-
-            graphic_terminal_write(shell->terminal, command->name);
-            graphic_terminal_write(shell->terminal, ": ");
-            graphic_terminal_write(shell->terminal, command->description);
-            graphic_terminal_putchar(shell->terminal, '\n');
-            return;
-        }
-
-        graphic_terminal_write(shell->terminal, command->name);
-        graphic_terminal_write(shell->terminal, ": ");
-        graphic_terminal_write(shell->terminal, command->description);
-        graphic_terminal_putchar(shell->terminal, '\n');
-    }
-
-    if (argc == 2) {
-        graphic_terminal_write(shell->terminal, "Command not found.\n");
-    }
-}
-
-static void shell_command_clear(Shell* shell, int argc, const char** argv) {
-    if (argc != 1) {
-        graphic_terminal_write(shell->terminal, "Usage: clear\n");
-        return;
-    }
-
-    graphic_terminal_clear(shell->terminal);
-}
-
-static void shell_command_echo(Shell* shell, int argc, const char** argv) {
-    if (argc == 1) {
-        graphic_terminal_putchar(shell->terminal, '\n');
-        return;
-    }
-
-    for (size_t i = 1; i < argc; i++) {
-        graphic_terminal_write(shell->terminal, argv[i]);
-        
-        if (i + 1 < argc) {
-            graphic_terminal_putchar(shell->terminal, ' ');
-        }
-    }
-
-    graphic_terminal_putchar(shell->terminal, '\n');
-}
-
-static void shell_command_version(Shell* shell, int argc, const char** argv) {
-    if (argc != 1) {
-        graphic_terminal_write(shell->terminal, "Usage: version\n");
-        return;
-    }
-
-    graphic_terminal_write(shell->terminal, "Miyara Development Build\n");
 }

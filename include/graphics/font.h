@@ -5,8 +5,25 @@
 #include <types/types.h>
 #include <math/vector.h>
 
+/**
+ * Defines the bit order used inside each bitmap font row.
+ *
+ * Bitmap glyph rows are stored as bytes. This value determines which
+ * bit represents the leftmost pixel when interpreting those bytes.
+ */
 typedef enum {
+    /**
+     * The least significant bit represents the leftmost pixel.
+     *
+     * Bit 0 is drawn first, followed by bits 1 through 7.
+     */
     FONT_BIT_ORDER_LSB_FIRST,
+
+    /**
+     * The most significant bit represents the leftmost pixel.
+     *
+     * Bit 7 is drawn first, followed by bits 6 through 0.
+     */
     FONT_BIT_ORDER_MSB_FIRST
 } FontBitOrder;
 

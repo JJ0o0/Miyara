@@ -8,6 +8,7 @@
 #include <graphics/font.h>
 
 #include <terminal/terminal.h>
+#include <shell/commands.h>
 #include <shell/shell.h>
 
 #include <interrupt/idt.h>
@@ -119,6 +120,7 @@ void kernel_main(u64 multiboot_info_address) {
         graphic_terminal_clear(&graphic_terminal);
 
         Shell shell;
+        shell_commands_init();
         shell_init(&shell, &graphic_terminal);
     renderer_present();
 
@@ -129,8 +131,11 @@ void kernel_main(u64 multiboot_info_address) {
     term_write(&term, "\nWelcome to Miyara\n");
 
     while (1) {
-        Event event;
+        if (graphic_terminal_update_cursor(&graphic_terminal)) {
+            graphic_terminal_present_cursor(&graphic_terminal);
+        }
 
+        Event event;
         if (!get_event(&event)) {
             continue;
         }

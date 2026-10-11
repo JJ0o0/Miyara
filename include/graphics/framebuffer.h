@@ -45,7 +45,7 @@ typedef struct {
     /**
      * Bits per pixel.
      */
-    u8  bpp;
+    u8 bpp;
 
     /**
      * Bit position of each color channel inside a pixel, as reported
