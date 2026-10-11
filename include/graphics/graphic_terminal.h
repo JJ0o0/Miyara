@@ -293,6 +293,8 @@ void graphic_terminal_reset_cursor_blink(GraphicTerminal* terminal);
  */
 void graphic_terminal_set_cursor_column(GraphicTerminal* terminal, u32 column);
 
+bool graphic_terminal_scroll(GraphicTerminal* terminal);
+
 u32 graphic_terminal_get_char_width(const GraphicTerminal* terminal);
 u32 graphic_terminal_get_char_height(const GraphicTerminal* terminal);
 u32 graphic_terminal_get_line_height(const GraphicTerminal* terminal);

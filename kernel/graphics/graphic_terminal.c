@@ -2,8 +2,6 @@
 #include <graphics/renderer.h>
 #include <timer/timer.h>
 
-static void graphic_terminal_scroll(GraphicTerminal* terminal);
-
 void graphic_terminal_init(GraphicTerminal* terminal, const GraphicTerminalConfig* config) {
     if (terminal == NULL || config == NULL || config->font == NULL) {
         return;
@@ -124,6 +122,10 @@ void graphic_terminal_clear_chars(GraphicTerminal* terminal, u32 count) {
         if (position.x + char_width > terminal->size.x) {
             position.x = 0;
             position.y += line_height;
+        }
+
+        if (position.y + char_height > terminal->size.y) {
+            break;
         }
 
         Vector2u pixel_position = {
@@ -275,35 +277,11 @@ void graphic_terminal_set_cursor_column(GraphicTerminal* terminal, u32 column) {
     terminal->cursor.x = x;
 }
 
-u32 graphic_terminal_get_char_width(const GraphicTerminal* terminal) {
-    if (terminal == NULL) {
-        return 0;
-    }
-
-    return terminal->font->glyph_size.x * terminal->scale;
-}
-
-u32 graphic_terminal_get_char_height(const GraphicTerminal* terminal) {
-    if (terminal == NULL) {
-        return 0;
-    }
-
-    return terminal->font->glyph_size.y * terminal->scale;
-}
-
-u32 graphic_terminal_get_line_height(const GraphicTerminal* terminal) {
-    if (terminal == NULL) {
-        return 0;
-    }
-
-    return graphic_terminal_get_char_height(terminal) + terminal->line_spacing;
-}
-
-static void graphic_terminal_scroll(GraphicTerminal* terminal) {
+bool graphic_terminal_scroll(GraphicTerminal* terminal) {
     u32 char_height = graphic_terminal_get_char_height(terminal);
     u32 line_height = graphic_terminal_get_line_height(terminal);
     if (line_height == 0 || line_height > terminal->size.y) {
-        return;
+        return false;
     }
 
     Vector2u src = {
@@ -331,6 +309,36 @@ static void graphic_terminal_scroll(GraphicTerminal* terminal) {
         terminal->background
     );
 
-    terminal->cursor.y -= line_height;
+    if (terminal->cursor.y >= line_height) {
+        terminal->cursor.y -= line_height;
+    } else {
+        terminal->cursor.y = 0;
+    }
+
     terminal->scroll_offset += line_height;
+    return true;
+}
+
+u32 graphic_terminal_get_char_width(const GraphicTerminal* terminal) {
+    if (terminal == NULL) {
+        return 0;
+    }
+
+    return terminal->font->glyph_size.x * terminal->scale;
+}
+
+u32 graphic_terminal_get_char_height(const GraphicTerminal* terminal) {
+    if (terminal == NULL) {
+        return 0;
+    }
+
+    return terminal->font->glyph_size.y * terminal->scale;
+}
+
+u32 graphic_terminal_get_line_height(const GraphicTerminal* terminal) {
+    if (terminal == NULL) {
+        return 0;
+    }
+
+    return graphic_terminal_get_char_height(terminal) + terminal->line_spacing;
 }

@@ -17,6 +17,9 @@ static void shell_insert_character(Shell* shell, char character);
 static void shell_redraw_from(Shell* shell, u32 index, u32 clear_count);
 static bool shell_set_terminal_cursor(Shell* shell, u32 index);
 
+static bool shell_row_fits(Shell* shell, i32 y);
+static void shell_ensure_input_visible(Shell* shell);
+
 static void shell_replace_input(Shell* shell, const char* text);
 static void shell_history_add(Shell* shell);
 static void shell_history_previous(Shell* shell);
@@ -263,8 +266,10 @@ static void shell_redraw_from(Shell* shell, u32 index, u32 clear_count) {
         return;
     }
 
+    shell_ensure_input_visible(shell);
+
     u32 draw_index = index;
-    while (draw_index < shell->input_length) {
+    while (draw_index <= shell->input_length) {
         if (shell_set_terminal_cursor(shell, draw_index)) {
             break;
         }
@@ -287,7 +292,7 @@ static void shell_redraw_from(Shell* shell, u32 index, u32 clear_count) {
                 continue;
             }
 
-            if (position.y >= (i32)shell->terminal->size.y) {
+            if (!shell_row_fits(shell, position.y)) {
                 break;
             }
 
@@ -313,7 +318,7 @@ static bool shell_set_terminal_cursor(Shell* shell, u32 index) {
     }
 
     Vector2i position = shell_get_input_position(shell, index);
-    if (position.x < 0 || position.y < 0) {
+    if (position.x < 0 || !shell_row_fits(shell, position.y)) {
         return false;
     }
 
@@ -331,6 +336,30 @@ static bool shell_set_terminal_cursor(Shell* shell, u32 index) {
     };
 
     return true;
+}
+
+static bool shell_row_fits(Shell* shell, i32 y) {
+    if (y < 0) {
+        return false;
+    }
+
+    u32 char_height = graphic_terminal_get_char_height(shell->terminal);
+    return (u64)y + char_height <= shell->terminal->size.y;
+}
+
+static void shell_ensure_input_visible(Shell* shell) {
+    u32 char_height = graphic_terminal_get_char_height(shell->terminal);
+
+    while (1) {
+        Vector2i end = shell_get_input_position(shell, shell->input_length);
+        if ((i64)end.y + char_height <= (i64)shell->terminal->size.y) {
+            return;
+        }
+
+        if (!graphic_terminal_scroll(shell->terminal)) {
+            return;
+        }
+    }
 }
 
 static void shell_replace_input(Shell* shell, const char* text) {
@@ -363,6 +392,8 @@ static void shell_replace_input(Shell* shell, const char* text) {
 
     shell->input_length = text_length;
     shell->cursor_index = text_length;
+
+    shell_ensure_input_visible(shell);
 
     u32 draw_index = 0;
     while (draw_index < shell->input_length) {
