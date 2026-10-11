@@ -4,6 +4,7 @@
 #include <graphics/color.h>
 #include <graphics/font.h>
 #include <math/vector.h>
+#include <math/geometry.h>
 #include <types/types.h>
 
 /**
@@ -85,6 +86,8 @@ typedef struct {
      */
     u8 line_spacing;
 
+    Insets padding;
+
     u64 scroll_offset;
 
     /**
@@ -128,6 +131,8 @@ typedef struct {
      * Extra vertical spacing, in pixels, added between terminal lines.
      */
     u8 line_spacing;
+
+    Insets padding;
 
     /**
      * Color of the text.
@@ -294,6 +299,9 @@ void graphic_terminal_reset_cursor_blink(GraphicTerminal* terminal);
 void graphic_terminal_set_cursor_column(GraphicTerminal* terminal, u32 column);
 
 bool graphic_terminal_scroll(GraphicTerminal* terminal);
+
+u32 graphic_terminal_get_content_width(const GraphicTerminal* terminal);
+u32 graphic_terminal_get_content_height(const GraphicTerminal* terminal);
 
 u32 graphic_terminal_get_char_width(const GraphicTerminal* terminal);
 u32 graphic_terminal_get_char_height(const GraphicTerminal* terminal);

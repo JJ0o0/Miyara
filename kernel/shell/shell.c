@@ -200,6 +200,10 @@ static void shell_handle_enter(Shell* shell) {
     }
 
     graphic_terminal_hide_cursor(shell->terminal);
+
+    shell_ensure_input_visible(shell);
+    shell_set_terminal_cursor(shell, shell->input_length);
+
     graphic_terminal_putchar(shell->terminal, '\n');
     
     shell->input_buffer[shell->input_length] = '\0';
@@ -277,33 +281,34 @@ static void shell_redraw_from(Shell* shell, u32 index, u32 clear_count) {
         draw_index++;
     }
 
-    if (draw_index < shell->input_length) {
-        u32 skipped = draw_index - index;
-        u32 visible_clear_count = 0;
-        if (skipped < clear_count) {
-            visible_clear_count = clear_count - skipped;
-        }
+    u32 skipped = draw_index - index;
+    u32 visible_clear_count = 0;
 
+    if (skipped < clear_count) {
+        visible_clear_count = clear_count - skipped;
+    }
+
+    if (draw_index <= shell->input_length) {
         graphic_terminal_clear_chars(shell->terminal, visible_clear_count);
-        
-        for (u32 i = draw_index; i < shell->input_length; i++) {
-            Vector2i position = shell_get_input_position(shell, i);
-            if (position.x < 0 || position.y < 0) {
-                continue;
-            }
-
-            if (!shell_row_fits(shell, position.y)) {
-                break;
-            }
-
-            graphic_terminal_draw_char_at(
-                shell->terminal, shell->input_buffer[i], 
-                (Vector2u){
-                    (u32)position.x,
-                    (u32)position.y
-                }
-            );
+    }
+    
+    for (u32 i = draw_index; i < shell->input_length; i++) {
+        Vector2i position = shell_get_input_position(shell, i);
+        if (position.x < 0 || position.y < 0) {
+            continue;
         }
+
+        if (!shell_row_fits(shell, position.y)) {
+            break;
+        }
+
+        graphic_terminal_draw_char_at(
+            shell->terminal, shell->input_buffer[i], 
+            (Vector2u){
+                (u32)position.x,
+                (u32)position.y
+            }
+        );
     }
 
     if (shell_set_terminal_cursor(shell, shell->cursor_index)) {
@@ -317,16 +322,22 @@ static bool shell_set_terminal_cursor(Shell* shell, u32 index) {
         return false;
     }
 
+    u32 content_width = graphic_terminal_get_content_width(shell->terminal);
+    u32 content_height = graphic_terminal_get_content_height(shell->terminal);
+    if (content_width == 0 || content_height == 0) {
+        return false;
+    }
+
     Vector2i position = shell_get_input_position(shell, index);
     if (position.x < 0 || !shell_row_fits(shell, position.y)) {
         return false;
     }
 
-    if (position.x >= shell->terminal->size.x) {
+    if (position.x >= content_width) {
         return false;
     }
 
-    if (position.y >= shell->terminal->size.y) {
+    if (position.y >= content_height) {
         return false;
     }
 
@@ -343,16 +354,26 @@ static bool shell_row_fits(Shell* shell, i32 y) {
         return false;
     }
 
+    u32 content_height = graphic_terminal_get_content_height(shell->terminal);
+    if (content_height == 0) {
+        return false;
+    }
+
     u32 char_height = graphic_terminal_get_char_height(shell->terminal);
-    return (u64)y + char_height <= shell->terminal->size.y;
+    return (u64)y + char_height <= content_height;
 }
 
 static void shell_ensure_input_visible(Shell* shell) {
+    u32 content_height = graphic_terminal_get_content_height(shell->terminal);
+    if (content_height == 0) {
+        return;
+    }
+
     u32 char_height = graphic_terminal_get_char_height(shell->terminal);
 
     while (1) {
         Vector2i end = shell_get_input_position(shell, shell->input_length);
-        if ((i64)end.y + char_height <= (i64)shell->terminal->size.y) {
+        if ((i64)end.y + char_height <= (i64)content_height) {
             return;
         }
 
@@ -404,8 +425,25 @@ static void shell_replace_input(Shell* shell, const char* text) {
         draw_index++;
     }
 
-    if (draw_index < shell->input_length) {
-        graphic_terminal_write(shell->terminal, &shell->input_buffer[draw_index]);
+    for (u32 i = draw_index; i < shell->input_length; i++) {
+        Vector2i position = shell_get_input_position(shell, i);
+
+        if (position.x < 0 || position.y < 0) {
+            continue;
+        }
+
+        if (!shell_row_fits(shell, position.y)) {
+            break;
+        }
+
+        graphic_terminal_draw_char_at(
+            shell->terminal,
+            shell->input_buffer[i],
+            (Vector2u){
+                (u32)position.x,
+                (u32)position.y
+            }
+        );
     }
 
     if (shell_set_terminal_cursor(shell, shell->cursor_index)) {
@@ -470,7 +508,12 @@ static void shell_history_next(Shell* shell) {
 static Vector2i shell_get_input_position(Shell* shell, u32 index) {
     if (shell == NULL) {
         return (Vector2i){0, 0};
-    }   
+    }
+
+    u32 content_width = graphic_terminal_get_content_width(shell->terminal);
+    if (content_width == 0) {
+        return (Vector2i){0, 0};
+    }
 
     u32 char_width = graphic_terminal_get_char_width(shell->terminal);
     if (char_width == 0) {
@@ -482,7 +525,7 @@ static Vector2i shell_get_input_position(Shell* shell, u32 index) {
         return (Vector2i){0, 0};
     }
 
-    u32 columns = shell->terminal->size.x / char_width;
+    u32 columns = content_width / char_width;
     if (columns == 0) {
         return (Vector2i){0, 0};
     }

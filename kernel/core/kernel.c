@@ -112,6 +112,12 @@ void kernel_main(u64 multiboot_info_address) {
             .font = &terminus_8x16_font,
             .scale = 1,
             .line_spacing = 2,
+            .padding = {
+                .left = 20,
+                .right = 20,
+                .top = 20,
+                .bottom = 20,
+            },
             .foreground = {255, 255, 255},
             .background = {13, 13, 13}
         };
@@ -133,6 +139,7 @@ void kernel_main(u64 multiboot_info_address) {
     while (1) {
         if (graphic_terminal_update_cursor(&graphic_terminal)) {
             graphic_terminal_present_cursor(&graphic_terminal);
+            cursor_present_overlay();
         }
 
         Event event;
@@ -147,6 +154,7 @@ void kernel_main(u64 multiboot_info_address) {
             case EVENT_KEYBOARD: {
                 shell_handle_key(&shell, event.data.keyboard);
                 renderer_present_rect(graphic_terminal.origin, graphic_terminal.size);
+                cursor_present_overlay();
                 break;
             }
         }

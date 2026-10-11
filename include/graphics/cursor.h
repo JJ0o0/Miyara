@@ -49,4 +49,6 @@ void cursor_handle_mouse(MouseEvent event);
  */
 void cursor_draw(void);
 
+void cursor_present_overlay(void);
+
 #endif
