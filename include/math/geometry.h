@@ -3,6 +3,12 @@
 
 #include <types/types.h>
 
+/**
+ * Insets applied to the four sides of a rectangular area, in pixels.
+ *
+ * Commonly used to describe internal padding while keeping the outer
+ * rectangle unchanged.
+ */
 typedef struct {
     u32 left;
     u32 right;

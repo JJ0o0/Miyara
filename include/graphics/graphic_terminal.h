@@ -29,6 +29,11 @@
 #define GRAPHIC_TERMINAL_CURSOR_BLINK_MS    500
 
 /**
+ * Number of character columns between tab stops.
+ */
+#define GRAPHIC_TERMINAL_TAB_WIDTH 4
+
+/**
  * A text terminal drawn with a bitmap font inside a rectangle of the
  * renderer.
  *
@@ -48,7 +53,8 @@ typedef struct {
     Size2u size;
 
     /**
-     * Position of the next character, in pixels, relative to origin.
+     * Position of the next character, in pixels, relative to the terminal
+     * content area (after padding).
      */
     Vector2u cursor;
 
@@ -86,8 +92,21 @@ typedef struct {
      */
     u8 line_spacing;
 
+    /**
+     * Internal spacing between the terminal bounds and its content area.
+     *
+     * Text, the text cursor and scrolling operate inside the remaining
+     * content area.
+     */
     Insets padding;
 
+    /**
+     * Total vertical distance, in pixels, that the terminal content has
+     * scrolled since initialization.
+     *
+     * This value only increases and can be used by higher-level components
+     * to keep logical positions synchronized with visible terminal content.
+     */
     u64 scroll_offset;
 
     /**
@@ -132,6 +151,12 @@ typedef struct {
      */
     u8 line_spacing;
 
+    /**
+     * Internal spacing between the terminal bounds and its content area.
+     *
+     * Text, the text cursor and scrolling operate inside the remaining
+     * content area.
+     */
     Insets padding;
 
     /**
@@ -160,23 +185,38 @@ void graphic_terminal_init(GraphicTerminal* terminal, const GraphicTerminalConfi
 /**
  * Writes one character at the cursor and advances it.
  *
- * A '\n' moves the cursor to the start of the next line. If a
- * character does not fit in the rest of the line, the cursor wraps to
- * the next line first. When the next line would not fit in the
- * terminal height, the contents scroll up by one line and the cursor
- * stays on the last line. Other control characters have no special
- * handling and are drawn as ordinary glyphs.
+ * A '\n' moves the cursor to the start of the next line.
  *
- * Only the glyph pixels are drawn, in the foreground color: the cell
- * background is not painted, so a character drawn over existing
- * content leaves the old pixels showing.
+ * A '\t' advances to the next tab stop. Tab stops occur every
+ * GRAPHIC_TERMINAL_TAB_WIDTH character columns and are implemented
+ * as ordinary spaces, so wrapping and scrolling work normally.
  *
- * @param terminal Terminal to write to. Ignored if NULL or without a
- *                 font.
+ * If a character does not fit in the remaining content width, the
+ * cursor wraps to the next line. When the next line would not fit in
+ * the content height, the terminal scrolls up by one line.
+ *
+ * Drawing is restricted to the terminal content area.
+ *
+ * @param terminal Terminal to write to. Ignored if NULL or without
+ *                 a font.
  * @param character Character to write.
  */
 void graphic_terminal_putchar(GraphicTerminal* terminal, char character);
 
+/**
+ * Draws one character at an explicit position in the terminal content
+ * area without changing the terminal cursor.
+ *
+ * The position is relative to the content area, not the outer terminal
+ * origin. Padding is applied automatically.
+ *
+ * No wrapping or scrolling is performed. If the complete glyph would
+ * fall outside the content area, nothing is drawn.
+ *
+ * @param terminal Terminal to draw on.
+ * @param character Character to draw.
+ * @param position Position in pixels relative to the content area.
+ */
 void graphic_terminal_draw_char_at(GraphicTerminal* terminal, char character, Vector2u position);
 
 /**
@@ -280,31 +320,74 @@ void graphic_terminal_present_cursor(GraphicTerminal* terminal);
  */
 bool graphic_terminal_update_cursor(GraphicTerminal* terminal);
 
+/**
+ * Restarts the visual cursor blink interval from the current timer tick.
+ *
+ * This is typically called after keyboard input so the cursor remains
+ * visible for a full blink interval before toggling again.
+ *
+ * @param terminal Terminal whose cursor blink timer should be reset.
+ */
 void graphic_terminal_reset_cursor_blink(GraphicTerminal* terminal);
 
 /**
  * Moves the terminal cursor horizontally to a character column on the
  * current line.
  *
- * The supplied column is converted to a pixel position using the
- * current font width and scale. The vertical cursor position is left
- * unchanged.
+ * The column is relative to the terminal content area. It is converted
+ * to pixels using the current glyph width and scale. The vertical cursor
+ * position is unchanged.
  *
- * If the requested column would place the character cell outside the
- * terminal area, the cursor is clamped to the last valid column.
+ * If the requested column is outside the content width, the cursor is
+ * clamped to the last valid character cell.
  *
  * @param terminal Terminal whose cursor should be moved.
- * @param column Character column relative to the terminal origin.
+ * @param column Character column relative to the content area.
  */
 void graphic_terminal_set_cursor_column(GraphicTerminal* terminal, u32 column);
 
+/**
+ * Scrolls the terminal content area upward by one line.
+ *
+ * Only the content area is moved; padding is left untouched. The newly
+ * exposed bottom line is filled with the background color.
+ *
+ * The terminal cursor is moved upward by the same amount when possible,
+ * and scroll_offset is increased by the line height.
+ *
+ * @param terminal Terminal to scroll.
+ *
+ * @return true if scrolling was performed.
+ * @return false if the terminal content area cannot contain one line.
+ */
 bool graphic_terminal_scroll(GraphicTerminal* terminal);
 
+/**
+ * Returns the usable content width after subtracting left and right
+ * padding. Returns 0 if the padding consumes the entire width.
+ */
 u32 graphic_terminal_get_content_width(const GraphicTerminal* terminal);
+
+/**
+ * Returns the usable content height after subtracting top and bottom
+ * padding. Returns 0 if the padding consumes the entire height.
+ */
 u32 graphic_terminal_get_content_height(const GraphicTerminal* terminal);
 
+/**
+ * Returns the width of one scaled font glyph, in pixels.
+ */
 u32 graphic_terminal_get_char_width(const GraphicTerminal* terminal);
+
+/**
+ * Returns the height of one scaled font glyph, in pixels.
+ */
 u32 graphic_terminal_get_char_height(const GraphicTerminal* terminal);
+
+/**
+ * Returns the vertical distance between consecutive terminal lines,
+ * equal to the scaled glyph height plus line_spacing.
+ */
 u32 graphic_terminal_get_line_height(const GraphicTerminal* terminal);
 
 #endif

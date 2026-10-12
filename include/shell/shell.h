@@ -53,7 +53,20 @@ typedef struct Shell {
      */
     u32 input_length;
 
+    /**
+     * Total terminal scroll offset, in pixels, when input_origin was saved.
+     *
+     * Used to determine the current on-screen position of shell input after
+     * the terminal has scrolled.
+     */
     u64 input_scroll_offset;
+
+    /**
+     * Position where the editable input begins, relative to the terminal
+     * content area.
+     *
+     * This is captured immediately after printing the prompt.
+     */
     Vector2u input_origin;
 
     /**

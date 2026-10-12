@@ -62,6 +62,8 @@ void shell_handle_key(Shell* shell, KeyEvent key_event) {
         case KEY_BACKSPACE:
             shell_handle_backspace(shell);
             return;
+        case KEY_TAB:
+            return;
         case KEY_DELETE:
             shell_handle_delete(shell);
             return;

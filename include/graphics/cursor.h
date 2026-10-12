@@ -4,51 +4,68 @@
 #include <mouse/mouse.h>
 
 /**
- * Initializes the graphical cursor.
+ * Initializes the graphical mouse cursor.
  *
- * Sets the cursor position to the center of the framebuffer.
- * The cursor is not drawn automatically; call cursor_draw() after
- * initialization if it should be immediately visible.
+ * Places the cursor at the center of the current renderer area and
+ * immediately presents it as an overlay.
  *
- * Must be called after framebuffer_init().
+ * The cursor is rendered transiently: it is drawn into the renderer
+ * backbuffer only long enough to present its region to the framebuffer,
+ * then the original backbuffer pixels are restored. This keeps the
+ * persistent scene free of cursor pixels.
+ *
+ * Must be called after the renderer and framebuffer are initialized.
  */
 void cursor_init(void);
 
 /**
  * Updates the cursor position from a mouse event.
  *
- * Applies the relative X and Y movement reported by the mouse to the
- * cursor's absolute screen position. The Y delta is inverted because
- * PS/2 mouse coordinates grow upwards while framebuffer coordinates
- * grow downwards.
+ * The previous cursor position is first restored on the physical
+ * framebuffer from the clean renderer backbuffer. The relative mouse
+ * movement is then applied to the cursor position.
  *
- * The resulting position is clamped to the framebuffer bounds so the
- * entire cursor remains visible.
+ * The Y delta is inverted because PS/2 mouse coordinates grow upwards,
+ * while framebuffer coordinates grow downwards.
  *
- * The previous cursor image is currently erased by filling its area
- * with black before the new position is drawn. This means any content
- * underneath the cursor is overwritten. A future rendering/backbuffer
- * system should remove this limitation.
+ * The final position is clamped so the complete cursor remains inside
+ * the renderer bounds.
+ *
+ * After moving, the cursor is presented again as an overlay at its new
+ * position.
  *
  * Must be called after cursor_init().
  *
- * @param event Mouse event containing the relative movement.
+ * @param event Mouse event containing relative movement.
  */
 void cursor_handle_mouse(MouseEvent event);
 
 /**
- * Draws the cursor at its current position.
+ * Draws the cursor into the renderer backbuffer at its current position.
  *
- * Renders the cursor directly into the framebuffer using the current
- * cursor dimensions and color.
+ * This function only modifies the backbuffer. It does not present the
+ * cursor to the framebuffer and does not restore the pixels underneath
+ * it.
  *
- * This function does not preserve the framebuffer contents underneath
- * the cursor.
- *
- * Requires a successfully initialized and mapped framebuffer.
+ * It is mainly used internally by cursor_present_overlay().
  */
 void cursor_draw(void);
 
+/**
+ * Presents the cursor as a transient overlay.
+ *
+ * The pixels underneath the cursor are first saved from the renderer
+ * backbuffer. The cursor is then drawn and only its rectangle is
+ * presented to the framebuffer.
+ *
+ * After presentation, the saved pixels are written back to the
+ * backbuffer without presenting them, leaving the persistent scene
+ * unchanged while the cursor remains visible on screen.
+ *
+ * Because later framebuffer presentations may overwrite the cursor,
+ * this function should be called again after presenting scene content
+ * that overlaps the cursor.
+ */
 void cursor_present_overlay(void);
 
 #endif
