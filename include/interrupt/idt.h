@@ -1,6 +1,7 @@
 #ifndef IDT_H
 #define IDT_H
 
+#include <cpu/context.h>
 #include <types/types.h>
 
 /**
@@ -26,7 +27,7 @@ typedef struct {
      *
      * 0 means no stack switch. Bits 3-7 are reserved and must be zero.
      */
-    u8  ist;
+    u8 ist;
 
     /**
      * Gate type and attributes.
@@ -35,7 +36,7 @@ typedef struct {
      * Bit 4: must be zero. Bits 0-3: gate type
      * (0xE = interrupt gate, 0xF = trap gate).
      */
-    u8  type_attr;
+    u8 type_attr;
 
     /**
      * Handler address, bits 16-31.
@@ -78,68 +79,9 @@ typedef struct __attribute__((packed)) {
  */
 typedef IDTEntry IDTTable[IDT_TABLE_ENTRY_COUNT];
 
-/**
- * CPU state saved on the stack when an exception occurs.
- *
- * The layout must match the frame built by the ISR stubs
- * (see idt.asm): the fields are in memory order, from the lowest
- * address (r15) to the highest (rflags).
- *
- * Changes made to this structure by the C handler are applied to
- * the CPU when the exception returns (e.g. changing rip).
- */
-typedef struct {
-    /**
-     * General-purpose registers, saved by the ISR stubs.
-     */
-    u64 r15;
-    u64 r14;
-    u64 r13;
-    u64 r12;
-    u64 r11;
-    u64 r10;
-    u64 r9;
-    u64 r8;
-
-    u64 rbp;
-    u64 rdi;
-    u64 rsi;
-    u64 rdx;
-    u64 rcx;
-    u64 rbx;
-    u64 rax;
-
-    /**
-     * Exception error code.
-     *
-     * Pushed by the CPU for exceptions that provide one (#GP, #PF).
-     * For the others, the stub pushes an artificial 0.
-     */
-    u64 error_code;
-
-    /**
-     * Instruction pointer at the time of the exception.
-     * Pushed by the CPU.
-     */
-    u64 rip;
-    
-    /**
-     * Code segment at the time of the exception.
-     * Pushed by the CPU.
-     */
-    u64 cs;
-
-    /**
-     * CPU flags at the time of the exception.
-     * Pushed by the CPU.
-     */
-    u64 rflags;
-} CPUContext;
-
 _Static_assert(sizeof(IDTEntry) == 16, "IDTEntry must be 16 bytes.");
 _Static_assert(sizeof(IDTR) == 10, "IDTR must be 10 bytes.");
 _Static_assert(sizeof(IDTTable) == 4096, "IDTTable must be 4096 bytes.");
-_Static_assert(sizeof(CPUContext) == 152, "CPUContext must be 152 bytes.");
 
 /**
  * Initializes the IDT, registers the exception handlers and loads
@@ -258,12 +200,12 @@ extern void isr_mouse(void);
 /**
  * Common C entry point for hardware interrupts (IRQs).
  *
- * Called by the ISR stub after it has saved the general-purpose
- * registers. Unlike exception_dispatch, it does not receive a
- * CPUContext*, since the IRQ stubs do not build one on the stack.
+ * Called by common_irq_handler after the ISR stub has saved the CPU
+ * state and constructed a CPUContext-compatible frame.
  *
  * @param irq IRQ number (0 = timer/PIT, 1 = keyboard, 12 = mouse).
+ * @param context Pointer to the saved CPU state on the interrupted stack.
  */
-void irq_dispatch(u64 irq);
+CPUContext* irq_dispatch(u64 irq, CPUContext* context);
 
 #endif

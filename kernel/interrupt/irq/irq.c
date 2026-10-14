@@ -5,11 +5,14 @@
 #include <timer/timer.h>
 #include <mouse/mouse.h>
 
-void irq_dispatch(u64 irq) {
+#include <scheduler/scheduler.h>
+
+CPUContext* irq_dispatch(u64 irq, CPUContext* context) {
     switch (irq) {
         // TIMER
         case 0:
             timer_tick();
+            context = scheduler_schedule(context);
             break;
         // KEYBOARD
         case 1:
@@ -22,4 +25,5 @@ void irq_dispatch(u64 irq) {
     }
     
     pic_send_eoi(irq);
+    return context;
 }

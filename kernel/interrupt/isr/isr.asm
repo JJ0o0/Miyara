@@ -111,6 +111,9 @@ section .text
     
     ; Timer (Vector 32)
     isr_timer:
+        ; Artificial Error Code
+        push qword 0
+
         ; Save registers
         push rax
         push rbx
@@ -133,6 +136,9 @@ section .text
     
     ; Keyboard (Vector 33)
     isr_keyboard:
+        ; Artificial Error Code
+        push qword 0
+
         ; Save registers
         push rax
         push rbx
@@ -155,6 +161,9 @@ section .text
     
     ; Mouse (Vector 44)
     isr_mouse:
+        ; Artificial Error Code
+        push qword 0
+
         ; Save registers
         push rax
         push rbx

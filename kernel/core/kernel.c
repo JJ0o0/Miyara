@@ -7,6 +7,8 @@
 #include <graphics/fonts.h>
 #include <graphics/font.h>
 
+#include <scheduler/scheduler.h>
+
 #include <terminal/terminal.h>
 #include <shell/commands.h>
 #include <shell/shell.h>
@@ -31,6 +33,21 @@
 #include <keyboard/keymap.h>
 #include <io/ps2.h>
 #include <io/io.h>
+
+static volatile u64 task_a_counter = 0;
+static volatile u64 task_b_counter = 0;
+
+static void task_a(void) {
+    while (1) {
+        task_a_counter++;
+    }
+}
+
+static void task_b(void) {
+    while (1) {
+        task_b_counter++;
+    }
+}
 
 void kernel_main(u64 multiboot_info_address) {
     Terminal term = create_terminal();
@@ -81,6 +98,15 @@ void kernel_main(u64 multiboot_info_address) {
     log(LOG_INFO, "Initializing PIT...");
         pit_init(100);
     log(LOG_SUCCESS, "Initialized PIT.");
+
+    log(LOG_INFO, "Initializing Scheduler...");
+        scheduler_init();
+    log(LOG_SUCCESS, "Initialized Scheduler.");
+
+    Process* task_a_process = process_create(task_a);
+    Process* task_b_process = process_create(task_b);
+    scheduler_add_process(task_a_process);
+    scheduler_add_process(task_b_process);
 
     log(LOG_INFO, "Initializing PS/2 ports...");
         ps2_init();

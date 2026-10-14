@@ -66,24 +66,24 @@ section .text
 
     ; common_irq_handler
     common_irq_handler:
-        mov rdi, [rsp] ; IRQ Number
+        mov rdi, [rsp]      ; IRQ Number
+        lea rsi, [rsp + 8]  ; CPUContext*
 
-        ; Save exception frame base
+        ; Save IRQ frame base
         mov rbp, rsp
 
-        ; 16 bytes align
+        ; 16-byte align
         and rsp, -16
 
-        ; irq_dispatch(u64)
+        ; irq_dispatch(u64, CPUContext*)
         cld
         call irq_dispatch
 
-        mov rsp, rbp
+        ; RAX = CPUContext* to restore
+        mov rsp, rax
 
     ; common_irq_return
     common_irq_return:
-        add rsp, 8
-
         ; Restoring registers
         pop r15
         pop r14
@@ -101,6 +101,9 @@ section .text
         pop rcx
         pop rbx
         pop rax
+
+        ; Skip the error code
+        add rsp, 8
 
         iretq
 
