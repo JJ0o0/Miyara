@@ -1,4 +1,5 @@
 #include <process/process.h>
+#include <scheduler/scheduler.h>
 
 #include <memory/memory.h>
 #include <memory/heap.h>
@@ -33,13 +34,14 @@ Process* process_create(void (*entry)(void)) {
     CPUContext* context = (CPUContext*)(task_rsp - sizeof(CPUContext));
     mem_set(context, 0, sizeof(CPUContext));
 
-    context->rip = (u64)entry;
+    context->rip = (u64)process_trampoline;
     context->cs = 0x18;
     context->rflags = 0x202;
     context->rsp = task_rsp;
     context->ss = 0x10;
 
     process->pid = next_pid++;
+    process->entry = entry;
     process->context = context;
     process->stack_base = stack_base;
     process->stack_size = PROCESS_STACK_SIZE;
@@ -47,4 +49,31 @@ Process* process_create(void (*entry)(void)) {
     process->next = NULL;
 
     return process;
+}
+
+void process_exit(void) {
+    Process* process = scheduler_get_current();
+    if (process == NULL) {
+        while (1) {
+            asm volatile ("hlt");
+        }
+    }
+
+    process->state = PROCESS_TERMINATED;
+
+    scheduler_yield();
+    
+    while (1) {
+        asm volatile ("hlt");
+    }
+}
+
+void process_trampoline(void) {
+    Process* process = scheduler_get_current();
+    if (process == NULL || process->entry == NULL) {
+        process_exit();
+    }
+
+    process->entry();
+    process_exit();
 }

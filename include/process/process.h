@@ -17,6 +17,8 @@ typedef struct Process {
     u64 pid;
     ProcessState state;
 
+    void (*entry)(void);
+
     CPUContext* context;
 
     void* stack_base;
@@ -26,5 +28,7 @@ typedef struct Process {
 } Process;
 
 Process* process_create(void (*entry)(void));
+void process_exit(void);
+void process_trampoline(void);
 
 #endif

@@ -5,6 +5,7 @@
 #include <cpu/context.h>
 
 void scheduler_init(void);
+void scheduler_yield(void);
 void scheduler_add_process(Process* process);
 
 CPUContext* scheduler_schedule(CPUContext* context);

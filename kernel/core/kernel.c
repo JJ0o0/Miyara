@@ -8,6 +8,7 @@
 #include <graphics/font.h>
 
 #include <scheduler/scheduler.h>
+#include <process/process.h>
 
 #include <terminal/terminal.h>
 #include <shell/commands.h>
@@ -34,13 +35,9 @@
 #include <io/ps2.h>
 #include <io/io.h>
 
-static volatile u64 task_a_counter = 0;
 static volatile u64 task_b_counter = 0;
 
 static void task_a(void) {
-    while (1) {
-        task_a_counter++;
-    }
 }
 
 static void task_b(void) {

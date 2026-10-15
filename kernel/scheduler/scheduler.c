@@ -9,6 +9,8 @@ static Process* current_process;
 
 static Process* scheduler_find_next_ready(void);
 
+extern void scheduler_yield_asm(void);
+
 void scheduler_init(void) {
     bootstrap_process.pid = 0;
     bootstrap_process.state = PROCESS_RUNNING;
@@ -20,6 +22,10 @@ void scheduler_init(void) {
     first_process = &bootstrap_process;
     last_process = &bootstrap_process;
     current_process = &bootstrap_process;
+}
+
+void scheduler_yield(void) {
+    scheduler_yield_asm();
 }
 
 void scheduler_add_process(Process* process) {
