@@ -87,4 +87,6 @@ void add_event(const Event* event);
  */
 bool get_event(Event* event);
 
+void wait_event(Event* event);
+
 #endif

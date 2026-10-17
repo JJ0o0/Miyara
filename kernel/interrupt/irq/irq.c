@@ -12,6 +12,7 @@ CPUContext* irq_dispatch(u64 irq, CPUContext* context) {
         // TIMER
         case 0:
             timer_tick();
+            scheduler_tick();
             context = scheduler_schedule(context);
             break;
         // KEYBOARD

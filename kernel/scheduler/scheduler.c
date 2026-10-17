@@ -1,12 +1,16 @@
 #include <scheduler/scheduler.h>
+#include <panic/panic.h>
+#include <timer/timer.h>
 #include <types/types.h>
 
 static Process bootstrap_process;
+static Process* idle_process;
 
 static Process* first_process;
 static Process* last_process;
 static Process* current_process;
 
+static void idle_task(void);
 static Process* scheduler_find_next_ready(void);
 
 extern void scheduler_yield_asm(void);
@@ -18,10 +22,36 @@ void scheduler_init(void) {
     bootstrap_process.stack_base = NULL;
     bootstrap_process.stack_size = 0;
     bootstrap_process.next = NULL;
+    bootstrap_process.block_reason = REASON_NONE;
+    bootstrap_process.wake_tick = 0;
 
     first_process = &bootstrap_process;
     last_process = &bootstrap_process;
     current_process = &bootstrap_process;
+
+    idle_process = process_create(idle_task);
+    if (idle_process == NULL) {
+        panic("Failed to create idle process");
+    }
+}
+
+void scheduler_tick(void) {
+    u64 now = timer_get_ticks();
+
+    Process* process = first_process;
+    while (process != NULL) {
+        if (
+            process->state == PROCESS_BLOCKED &&
+            process->block_reason == REASON_SLEEP &&
+            now >= process->wake_tick
+        ) {
+            process->state = PROCESS_READY;
+            process->block_reason = REASON_NONE;
+            process->wake_tick = 0;
+        }
+
+        process = process->next;
+    }
 }
 
 void scheduler_yield(void) {
@@ -85,6 +115,12 @@ Process* scheduler_get_current(void) {
     return current_process;
 }
 
+static void idle_task(void) {
+    while (1) {
+        asm volatile ("hlt");
+    }
+}
+
 static Process* scheduler_find_next_ready(void) {
     if (first_process == NULL) {
         return NULL;
@@ -111,6 +147,10 @@ static Process* scheduler_find_next_ready(void) {
             candidate = first_process;
         }
     } while (candidate != start);
+
+    if (idle_process != NULL && idle_process->state == PROCESS_READY) {
+        return idle_process;
+    }
 
     return NULL;
 }

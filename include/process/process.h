@@ -13,9 +13,18 @@ typedef enum {
     PROCESS_TERMINATED
 } ProcessState;
 
+typedef enum {
+    REASON_NONE,
+    REASON_SLEEP,
+    REASON_EVENT
+} ProcessBlockReason;
+
 typedef struct Process {
     u64 pid;
     ProcessState state;
+    
+    ProcessBlockReason block_reason;
+    u64 wake_tick;
 
     void (*entry)(void);
 
@@ -29,6 +38,9 @@ typedef struct Process {
 
 Process* process_create(void (*entry)(void));
 void process_exit(void);
+void process_block(void);
+void process_wake(Process* process);
+void process_sleep(u64 milliseconds);
 void process_trampoline(void);
 
 #endif

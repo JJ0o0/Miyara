@@ -7,6 +7,8 @@
 #include <graphics/fonts.h>
 #include <graphics/font.h>
 
+#include <panic/panic_console.h>
+
 #include <scheduler/scheduler.h>
 #include <process/process.h>
 
@@ -35,9 +37,17 @@
 #include <io/ps2.h>
 #include <io/io.h>
 
+static volatile u64 task_a_counter = 0;
 static volatile u64 task_b_counter = 0;
 
+static Process* task_a_process;
+
 static void task_a(void) {
+    process_sleep(10000);
+    panic_console_write("A woke up from idle!\n");
+
+    while (1) {
+    }
 }
 
 static void task_b(void) {
@@ -100,7 +110,7 @@ void kernel_main(u64 multiboot_info_address) {
         scheduler_init();
     log(LOG_SUCCESS, "Initialized Scheduler.");
 
-    Process* task_a_process = process_create(task_a);
+    task_a_process = process_create(task_a);
     Process* task_b_process = process_create(task_b);
     scheduler_add_process(task_a_process);
     scheduler_add_process(task_b_process);
@@ -166,9 +176,7 @@ void kernel_main(u64 multiboot_info_address) {
         }
 
         Event event;
-        if (!get_event(&event)) {
-            continue;
-        }
+        wait_event(&event);
 
         switch (event.type) {
             case EVENT_MOUSE:
