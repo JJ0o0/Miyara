@@ -19,7 +19,9 @@ typedef enum {
      * A mouse packet (movement and button state); the payload is
      * EventData.mouse.
      */
-    EVENT_MOUSE
+    EVENT_MOUSE,
+
+    EVENT_CURSOR_TICK
 } EventType;
 
 /**

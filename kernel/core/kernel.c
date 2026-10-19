@@ -7,10 +7,7 @@
 #include <graphics/fonts.h>
 #include <graphics/font.h>
 
-#include <panic/panic_console.h>
-
 #include <scheduler/scheduler.h>
-#include <process/process.h>
 
 #include <terminal/terminal.h>
 #include <shell/commands.h>
@@ -36,25 +33,6 @@
 #include <keyboard/keymap.h>
 #include <io/ps2.h>
 #include <io/io.h>
-
-static volatile u64 task_a_counter = 0;
-static volatile u64 task_b_counter = 0;
-
-static Process* task_a_process;
-
-static void task_a(void) {
-    process_sleep(10000);
-    panic_console_write("A woke up from idle!\n");
-
-    while (1) {
-    }
-}
-
-static void task_b(void) {
-    while (1) {
-        task_b_counter++;
-    }
-}
 
 void kernel_main(u64 multiboot_info_address) {
     Terminal term = create_terminal();
@@ -109,11 +87,6 @@ void kernel_main(u64 multiboot_info_address) {
     log(LOG_INFO, "Initializing Scheduler...");
         scheduler_init();
     log(LOG_SUCCESS, "Initialized Scheduler.");
-
-    task_a_process = process_create(task_a);
-    Process* task_b_process = process_create(task_b);
-    scheduler_add_process(task_a_process);
-    scheduler_add_process(task_b_process);
 
     log(LOG_INFO, "Initializing PS/2 ports...");
         ps2_init();
@@ -170,11 +143,6 @@ void kernel_main(u64 multiboot_info_address) {
     term_write(&term, "\nWelcome to Miyara\n");
 
     while (1) {
-        if (graphic_terminal_update_cursor(&graphic_terminal)) {
-            graphic_terminal_present_cursor(&graphic_terminal);
-            cursor_present_overlay();
-        }
-
         Event event;
         wait_event(&event);
 
@@ -182,12 +150,17 @@ void kernel_main(u64 multiboot_info_address) {
             case EVENT_MOUSE:
                 cursor_handle_mouse(event.data.mouse);
                 break;
-            case EVENT_KEYBOARD: {
+            case EVENT_KEYBOARD:
                 shell_handle_key(&shell, event.data.keyboard);
                 renderer_present_rect(graphic_terminal.origin, graphic_terminal.size);
                 cursor_present_overlay();
                 break;
-            }
+            case EVENT_CURSOR_TICK:
+                if (graphic_terminal_update_cursor(&graphic_terminal)) {
+                    graphic_terminal_present_cursor(&graphic_terminal);
+                    cursor_present_overlay();
+                }
+                break;
         }
     }
 }
