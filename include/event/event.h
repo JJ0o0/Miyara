@@ -21,6 +21,11 @@ typedef enum {
      */
     EVENT_MOUSE,
 
+    /**
+     * Fired periodically (every 500ms, from the timer IRQ) with no
+     * payload. Used to drive things that need to happen on a clock
+     * regardless of other events, such as blinking a text cursor.
+     */
     EVENT_CURSOR_TICK
 } EventType;
 
@@ -89,6 +94,23 @@ void add_event(const Event* event);
  */
 bool get_event(Event* event);
 
+/**
+ * Pops the next event from the queue, blocking the current process
+ * until one is available if the queue is empty.
+ *
+ * Unlike get_event(), this never returns without an event: if the
+ * queue is empty, it marks the current process PROCESS_BLOCKED
+ * (block_reason = REASON_EVENT) and yields to the scheduler. It is
+ * woken by add_event() as soon as something is pushed, and tries
+ * again — so it may block and retry more than once if another
+ * process consumes the event first.
+ *
+ * Panics if there is no current process (the scheduler has not been
+ * initialized).
+ *
+ * @param event Output parameter; filled with the dequeued event.
+ *              Does nothing if NULL.
+ */
 void wait_event(Event* event);
 
 #endif

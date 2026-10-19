@@ -1,4 +1,7 @@
 #include <scheduler/scheduler.h>
+#include <process/process.h>
+#include <memory/heap.h>
+
 #include <panic/panic.h>
 #include <timer/timer.h>
 #include <types/types.h>
@@ -72,6 +75,53 @@ void scheduler_add_process(Process* process) {
 
     last_process->next = process;
     last_process = process;
+}
+
+void scheduler_reap_terminated(void) {
+    Process* previous = NULL;
+    Process* process = first_process;
+
+    while (process != NULL) {
+        Process* next = process->next;
+        if (process == &bootstrap_process) {
+            previous = process;
+            process = next;
+            continue;
+        }
+
+        if (process == idle_process) {
+            previous = process;
+            process = next;
+            continue;
+        }
+
+        if (process == current_process) {
+            previous = process;
+            process = next;
+            continue;
+        }
+
+        if (process->state == PROCESS_TERMINATED) {
+            if (previous != NULL) {
+                previous->next = next;
+            } else {
+                first_process = next;
+            }
+
+            if (process == last_process) {
+                last_process = previous;
+            }
+
+            k_free(process->stack_base);
+            k_free(process);
+
+            process = next;
+            continue;
+        }
+
+        previous = process;
+        process = next;
+    }
 }
 
 CPUContext* scheduler_schedule(CPUContext* context) {

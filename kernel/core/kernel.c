@@ -12,6 +12,7 @@
 #include <terminal/terminal.h>
 #include <shell/commands.h>
 #include <shell/shell.h>
+#include <panic/panic.h>
 
 #include <interrupt/idt.h>
 #include <interrupt/pic.h>
@@ -63,8 +64,7 @@ void kernel_main(u64 multiboot_info_address) {
 
     log(LOG_INFO, "Initializing Renderer...");
         if (!renderer_init()) {
-            log(LOG_ERROR, "Error while initializing Renderer!");
-            while (1) { }
+            panic("Failed to initialize renderer");
         }
     log(LOG_SUCCESS, "Initialized Renderer.");
 
@@ -94,8 +94,7 @@ void kernel_main(u64 multiboot_info_address) {
 
     log(LOG_INFO, "Initializing Keyboard...");
         if (!keyboard_init()) {
-            log(LOG_ERROR, "Error while initializing Keyboard!");
-            while (1) { }
+            panic("Failed to initialize keyboard");
         }
     log(LOG_SUCCESS, "Initialized Keyboard.");
 
@@ -145,6 +144,8 @@ void kernel_main(u64 multiboot_info_address) {
     while (1) {
         Event event;
         wait_event(&event);
+
+        scheduler_reap_terminated();
 
         switch (event.type) {
             case EVENT_MOUSE:
