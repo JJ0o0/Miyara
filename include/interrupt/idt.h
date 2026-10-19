@@ -121,6 +121,7 @@ void idt_set_handler(IDTEntry* entry, u64 handler);
  * @param handler Address of the handler routine.
  */
 void idt_set_gate(IDTEntry* entry, u64 handler);
+void idt_set_user_gate(IDTEntry* entry, u64 handler);
 
 /**
  * Reads the CR2 register.
@@ -196,6 +197,8 @@ extern void isr_keyboard(void);
  * pic_send_eoi).
  */
 extern void isr_mouse(void);
+
+extern void isr_syscall(void);
 
 /**
  * Common C entry point for hardware interrupts (IRQs).

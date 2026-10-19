@@ -18,6 +18,8 @@ void idt_init(void) {
     idt_set_gate(&idt_table[33], (u64)isr_keyboard);
     idt_set_gate(&idt_table[44], (u64)isr_mouse);
 
+    idt_set_user_gate(&idt_table[0x80], (u64)isr_syscall);
+
     idt_load(&idtr); // interrupt/idt.asm
 }
 
@@ -33,5 +35,14 @@ void idt_set_gate(IDTEntry* entry, u64 handler) {
     entry->selector = 0x18;
     entry->ist = 0;
     entry->type_attr = 0x8E;
+    entry->reserved = 0;
+}
+
+void idt_set_user_gate(IDTEntry* entry, u64 handler) {
+    idt_set_handler(entry, handler);
+
+    entry->selector = 0x18;
+    entry->ist = 0;
+    entry->type_attr = 0xEE;
     entry->reserved = 0;
 }
