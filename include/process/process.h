@@ -8,7 +8,9 @@
  * Size, in bytes, of the stack allocated for each new process by
  * process_create().
  */
-#define PROCESS_STACK_SIZE (16ULL * 1024)
+#define PROCESS_STACK_SIZE        (16ULL * 1024)
+#define USER_STACK_SIZE           (16ULL * 1024)
+#define KERNEL_STACK_SIZE         (16ULL * 1024)
 
 /**
  * Scheduling state of a process.
@@ -36,6 +38,11 @@ typedef enum {
      */
     PROCESS_TERMINATED
 } ProcessState;
+
+typedef enum {
+    PROCESS_KERNEL,
+    PROCESS_USER
+} ProcessType;
 
 /**
  * Why a PROCESS_BLOCKED process is blocked, so the right condition
@@ -80,6 +87,7 @@ typedef struct Process {
      * Current scheduling state.
      */
     ProcessState state;
+    ProcessType type;
 
     /**
      * Why this process is blocked. Only meaningful when
@@ -118,6 +126,9 @@ typedef struct Process {
      */
     u64 stack_size;
 
+    void* kernel_stack_base;
+    u64 kernel_stack_size;
+
     /**
      * Next process in the scheduler's process list, or NULL if this
      * is the last one.
@@ -140,6 +151,8 @@ typedef struct Process {
  *         failed (process or stack).
  */
 Process* process_create(void (*entry)(void));
+
+Process* process_create_user(void (*entry)(void));
 
 /**
  * Terminates the currently running process.

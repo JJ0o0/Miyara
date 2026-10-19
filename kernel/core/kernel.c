@@ -28,12 +28,17 @@
 
 #include <log/log.h>
 #include <cpu/cpu.h>
+#include <cpu/tss.h>
 
 #include <event/event.h>
 #include <mouse/mouse.h>
 #include <keyboard/keymap.h>
 #include <io/ps2.h>
 #include <io/io.h>
+
+static void dummy_user_entry(void) {
+    while (1) {}
+}
 
 void kernel_main(u64 multiboot_info_address) {
     Terminal term = create_terminal();
@@ -80,6 +85,10 @@ void kernel_main(u64 multiboot_info_address) {
         cpu_init();
     log(LOG_SUCCESS, "Initialized CPU.");
 
+    log(LOG_INFO, "Initializing TSS...");
+        tss_init();
+    log(LOG_SUCCESS, "Initialized TSS.");
+
     log(LOG_INFO, "Initializing PIT...");
         pit_init(100);
     log(LOG_SUCCESS, "Initialized PIT.");
@@ -87,6 +96,13 @@ void kernel_main(u64 multiboot_info_address) {
     log(LOG_INFO, "Initializing Scheduler...");
         scheduler_init();
     log(LOG_SUCCESS, "Initialized Scheduler.");
+
+    Process* user = process_create_user(dummy_user_entry);
+    if (user == NULL) {
+        panic("failed to create user process");
+    }
+
+    scheduler_add_process(user);
 
     log(LOG_INFO, "Initializing PS/2 ports...");
         ps2_init();

@@ -1,6 +1,7 @@
 #include <scheduler/scheduler.h>
 #include <process/process.h>
 #include <memory/heap.h>
+#include <cpu/tss.h>
 
 #include <panic/panic.h>
 #include <timer/timer.h>
@@ -22,8 +23,11 @@ void scheduler_init(void) {
     bootstrap_process.pid = 0;
     bootstrap_process.state = PROCESS_RUNNING;
     bootstrap_process.context = NULL;
+    bootstrap_process.type = PROCESS_KERNEL;
     bootstrap_process.stack_base = NULL;
     bootstrap_process.stack_size = 0;
+    bootstrap_process.kernel_stack_base = NULL;
+    bootstrap_process.kernel_stack_size = 0;
     bootstrap_process.next = NULL;
     bootstrap_process.block_reason = REASON_NONE;
     bootstrap_process.wake_tick = 0;
@@ -153,6 +157,15 @@ CPUContext* scheduler_schedule(CPUContext* context) {
         }
 
         return context;
+    }
+
+    if (next->type == PROCESS_USER) {
+        if (next->kernel_stack_base == NULL || next->kernel_stack_size == 0) {
+            panic("user process without kernel stack");
+        }
+
+        u64 kernel_stack_top = (u64)next->kernel_stack_base + next->kernel_stack_size;
+        tss_set_rsp0(kernel_stack_top);
     }
 
     next->state = PROCESS_RUNNING;

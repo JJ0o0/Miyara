@@ -27,7 +27,7 @@ static bool paging_map_huge_page(u64 virtual_address, u64 physical_address, u64 
 static bool paging_set_flags(u64 virtual_address, u64 flags);
 static bool paging_get_flags(u64 virtual_address, u64* flags);
 
-static PageTable* paging_create_table(PageTableEntry* entry);
+static PageTable* paging_create_table(PageTableEntry* entry, u64 flags);
 static PageTable* paging_get_table(PageTableEntry entry);
 
 static PagingWalkType paging_walk(u64 virtual_address, PageTableEntry** entry);
@@ -88,13 +88,13 @@ bool paging_map_page(u64 virtual_address, u64 physical_address, u64 flags) {
     }
     
     u64 pml4_index = paging_pml4_index(virtual_address);
-    PageTable* pdpt = paging_create_table(&pml4[0][pml4_index]);
+    PageTable* pdpt = paging_create_table(&pml4[0][pml4_index], flags);
     if (pdpt == NULL) {
         return false;
     }
 
     u64 pdpt_index = paging_pdpt_index(virtual_address);
-    PageTable* pd = paging_create_table(&pdpt[0][pdpt_index]);
+    PageTable* pd = paging_create_table(&pdpt[0][pdpt_index], flags);
     if (pd == NULL) {
         return false;
     }
@@ -104,7 +104,7 @@ bool paging_map_page(u64 virtual_address, u64 physical_address, u64 flags) {
         return false;
     }
 
-    PageTable* pt = paging_create_table(&pd[0][pd_index]);
+    PageTable* pt = paging_create_table(&pd[0][pd_index], flags);
     if (pt == NULL) {
         return false;
     }
@@ -261,13 +261,13 @@ static bool paging_map_huge_page(u64 virtual_address, u64 physical_address, u64 
     }
 
     u64 pml4_index = paging_pml4_index(virtual_address);
-    PageTable* pdpt = paging_create_table(&pml4[0][pml4_index]);
+    PageTable* pdpt = paging_create_table(&pml4[0][pml4_index], flags);
     if (pdpt == NULL) {
         return false;
     }
 
     u64 pdpt_index = paging_pdpt_index(virtual_address);
-    PageTable* pd = paging_create_table(&pdpt[0][pdpt_index]);
+    PageTable* pd = paging_create_table(&pdpt[0][pdpt_index], flags);
     if (pd == NULL) {
         return false;
     }
@@ -319,8 +319,12 @@ static bool paging_get_flags(u64 virtual_address, u64* flags) {
     return true;
 }
 
-static PageTable* paging_create_table(PageTableEntry* entry) {
+static PageTable* paging_create_table(PageTableEntry* entry, u64 flags) {
     if (*entry != 0) {
+        if (flags & PAGE_USER) {
+            *entry |= PAGE_USER;
+        }
+
         return paging_get_table(*entry);
     }
 
@@ -345,7 +349,12 @@ static PageTable* paging_create_table(PageTableEntry* entry) {
 
     mem_set(table, 0x0, PAGE_SIZE);
 
-    *entry = address | PAGE_PRESENT | PAGE_WRITABLE;
+    u64 entry_flags = PAGE_PRESENT | PAGE_WRITABLE;
+    if (flags & PAGE_USER) {
+        entry_flags |= PAGE_USER;
+    }
+
+    *entry = address | entry_flags;
     return table;
 }
 

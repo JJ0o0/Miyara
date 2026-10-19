@@ -60,6 +60,30 @@ section .rodata
             db 0x9A     ; Access (present, ring 0, code, executable, readable)
             db 0xAF     ; Limit 19:16 (0xF) + Flags (granularity=4K, long mode)
             db 0x00     ; Base  31:24
+        
+        ; Selector 0x20 - User data, Ring 3
+        gdt_user_data:
+            dw 0xFFFF
+            dw 0x0000
+            db 0x00
+            db 0xF2
+            db 0xCF
+            db 0x00
+
+        ; Selector 0x28 - User code 64-bit, Ring 3
+        gdt_user_code64:
+            dw 0xFFFF
+            dw 0x0000
+            db 0x00
+            db 0xFA
+            db 0xAF
+            db 0x00
+        
+        global gdt_tss
+        
+        gdt_tss:
+            dq 0
+            dq 0
     gdt_end:
 
     ; GDT Descriptor
